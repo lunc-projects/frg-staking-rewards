@@ -49,3 +49,11 @@ button.linkbtn{background:none;border:none;color:#fde68a;text-decoration:underli
 .big{font-size:16px}
 footer{color:var(--muted);text-align:center;font-size:12px;margin-top:28px}
 @media(max-width:620px){.tokengrid{grid-template-columns:1fr}.app{padding:10px 10px 40px}}
+/* --- Cosmos Kit / Interchain-UI wallet modal safety net -------------------
+   The modal's real styling comes from '@interchain-ui/react/styles'
+   (imported in main.jsx). The rules below are a belt-and-braces cap so the
+   WalletConnect badge glyph in each wallet-list row can never blow up
+   again: ._4lx8b413 is the pinned @interchain-ui/react 1.26.3 generated
+   class of the badge <span> in list rows; its <svg> is the blue
+   WalletConnect "W". Caps match the component's designed size (~20px). */
+._4lx8b413 svg{width:20px!important;height:20px!important;flex:0 0 auto}

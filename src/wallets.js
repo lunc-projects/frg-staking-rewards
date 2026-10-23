@@ -1,22 +1,26 @@
-// Custom WalletConnect wallets for Terra Classic community wallets that are
-// not listed in the WalletConnect explorer registry (so no upstream
-// Cosmos Kit package exists for them):
+// Custom WalletConnect wallet for a Terra Classic community wallet that
+// is not listed in the WalletConnect explorer registry (so no upstream
+// Cosmos Kit package exists for it):
 //
 //   - Galaxy Station — the Terra Classic community Station fork
 //     (https://station.terraclassic.community). In its in-app browser it
 //     injects window.station, which the @cosmos-kit/station extension entry
 //     already covers; this entry adds the standard Cosmos WalletConnect
-//     pairing flow (QR / copy-link) for desktop and other mobile browsers.
-//   - LUNCDash — Terra Classic mobile wallet (https://luncdash.com),
-//     standard Cosmos WalletConnect.
+//     pairing flow (QR / copy-link / mobile deep link) for desktop and
+//     other mobile browsers.
 //
-// Both are built exactly like @cosmos-kit/keplr-mobile / station-mobile:
-// a WCWallet (from @cosmos-kit/walletconnect) whose chain wallets are
-// ChainWC instances backed by the generic WCClient, which speaks the
-// standard Cosmos namespace (cosmos_getAccounts / cosmos_signAmino /
-// cosmos_signDirect). Because neither wallet is in the WC explorer
-// registry, no registry `projectId` / deep-link listing exists — pairing
-// goes through the Cosmos Kit modal's QR code and copyable WC URI.
+// Built exactly like @cosmos-kit/keplr-mobile / station-mobile: a WCWallet
+// (from @cosmos-kit/walletconnect) whose chain wallets are ChainWC
+// instances backed by the generic WCClient, which speaks the standard
+// Cosmos namespace (cosmos_getAccounts / cosmos_signAmino /
+// cosmos_signDirect). Because the wallet is not in the WC explorer
+// registry, no registry `projectId` / deep-link listing exists — the
+// mobile app links below are wired by hand (see formatNativeUrl).
+//
+// NOTE: LUNCDash was removed 2026-10-23 — it speaks only the legacy
+// WalletConnect v1 bridge protocol, which Cosmos Kit cannot use; a dead
+// connect button is worse than none. Revisit only with a custom v1
+// connector.
 import { ChainWC, WCClient, WCWallet } from '@cosmos-kit/walletconnect';
 
 export const galaxyStationInfo = {
@@ -36,41 +40,39 @@ export const galaxyStationInfo = {
   supportedChains: ['terraclassic'],
   walletconnect: {
     name: 'Galaxy Station',
+    // Galaxy Station returns base64-encoded pubkeys; with the client
+    // default ('hex') account decoding after approval would be wrong.
+    encoding: 'base64',
     mobile: {
-      universal: 'https://station.terraclassic.community',
+      // Real app links, proven in the FRG Fight Club build — NOT the
+      // project website. Android goes through the Hexxagon intent link;
+      // iOS only answers to its native scheme (the HTTPS site just loads
+      // the web dashboard and strands the user).
+      native: {
+        ios: 'galaxystation:',
+        android: 'https://station.hexxagon.io/wcV2',
+      },
     },
-  },
-};
-
-export const luncDashInfo = {
-  name: 'luncdash',
-  prettyName: 'LUNCDash',
-  mode: 'wallet-connect',
-  mobileDisabled: false,
-  rejectMessage: {
-    source: 'Request rejected',
-  },
-  downloads: [
-    {
-      link: 'https://luncdash.com',
-    },
-  ],
-  supportedChains: ['terraclassic'],
-  walletconnect: {
-    name: 'LUNCDash',
-    mobile: {
-      universal: 'https://luncdash.com',
+    // Composes the pairing deep link from the native app URL + the
+    // WalletConnect URI, modeled on @cosmos-kit/keplr-mobile:
+    //   iOS:     galaxystation://wcV2?<encoded wc uri>
+    //   Android: https://station.hexxagon.io/wcV2?<encoded wc uri>
+    //            #Intent;package=io.hexxagon.station;scheme=galaxystation;end;
+    formatNativeUrl: (appUrl, wcUri, os, _name) => {
+      const encodedWcUrl = encodeURIComponent(wcUri);
+      switch (os) {
+        case 'ios':
+          return `galaxystation://wcV2?${encodedWcUrl}`;
+        case 'android':
+          return `${appUrl}?${encodedWcUrl}#Intent;package=io.hexxagon.station;scheme=galaxystation;end;`;
+        default:
+          return `galaxystation://wcV2?${encodedWcUrl}`;
+      }
     },
   },
 };
 
 export class ChainGalaxyStation extends ChainWC {
-  constructor(walletInfo, chainInfo) {
-    super(walletInfo, chainInfo, WCClient);
-  }
-}
-
-export class ChainLUNCDash extends ChainWC {
   constructor(walletInfo, chainInfo) {
     super(walletInfo, chainInfo, WCClient);
   }
@@ -82,13 +84,6 @@ export class GalaxyStationWallet extends WCWallet {
   }
 }
 
-export class LUNCDashWallet extends WCWallet {
-  constructor(walletInfo) {
-    super(walletInfo, ChainLUNCDash, WCClient);
-  }
-}
-
 const galaxyStation = new GalaxyStationWallet(galaxyStationInfo);
-const luncDash = new LUNCDashWallet(luncDashInfo);
 
-export const wallets = [galaxyStation, luncDash];
+export const wallets = [galaxyStation];
