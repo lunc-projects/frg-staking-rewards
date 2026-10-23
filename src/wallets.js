@@ -23,6 +23,19 @@
 // connector.
 import { ChainWC, WCClient, WCWallet } from '@cosmos-kit/walletconnect';
 
+// Galaxy Station has no WalletConnect Explorer listing (no listing ID),
+// so WCClient's Explorer lookup leaves wcCloudInfo undefined and
+// initAppUrl() throws before it can fall back to the registry `mobile`
+// links above — leaving redirect permanently false and the modal stuck
+// on the QR view. Seed an empty wcCloudInfo so the fallback is reached
+// (the same pattern @cosmos-kit/keplr-mobile uses with its custom
+// client subclass).
+class GalaxyClient extends WCClient {
+  async initWCCloudInfo() {
+    this.wcCloudInfo = { mobile: {} };
+  }
+}
+
 export const galaxyStationInfo = {
   name: 'galaxy-station',
   prettyName: 'Galaxy Station',
@@ -74,13 +87,13 @@ export const galaxyStationInfo = {
 
 export class ChainGalaxyStation extends ChainWC {
   constructor(walletInfo, chainInfo) {
-    super(walletInfo, chainInfo, WCClient);
+    super(walletInfo, chainInfo, GalaxyClient);
   }
 }
 
 export class GalaxyStationWallet extends WCWallet {
   constructor(walletInfo) {
-    super(walletInfo, ChainGalaxyStation, WCClient);
+    super(walletInfo, ChainGalaxyStation, GalaxyClient);
   }
 }
 
