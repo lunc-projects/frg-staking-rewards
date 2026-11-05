@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LUNC Dev Studio — Proposal Tool</title>
+<meta name="description" content="Prepare and submit a Terra Classic governance proposal from your own wallet. Built by LUNC Dev Studio.">
+<style>
+  :root{
+    --bg:#0b0e14; --panel:#141926; --panel2:#1a2133; --line:#2a3350;
+    --gold:#f0b90b; --gold2:#ffd75e; --txt:#eef1f8; --mut:#9aa5c0;
+    --red:#ff6b6b; --grn:#3ddc97; --rad:16px;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  body{margin:0; background:var(--bg); color:var(--txt);
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:16px; line-height:1.45}
+  .wrap{max-width:760px; margin:0 auto; padding:14px 14px 48px}
+  header{display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding:8px 2px 4px}
+  .moon{font-size:30px; color:var(--gold); line-height:1}
+  .brand{font-weight:800; letter-spacing:.4px; font-size:19px}
+  .brand small{display:block; font-weight:600; color:var(--gold2); font-size:12.5px; letter-spacing:1.6px}
+  header .sp{flex:1}
+  select#lang{min-height:48px; font-size:16px; background:var(--panel2); color:var(--txt);
+    border:1px solid var(--line); border-radius:12px; padding:0 10px; max-width:46vw}
+  .statusline{margin:12px 0 0; padding:12px 14px; background:var(--panel); border:1px solid var(--line);
+    border-left:4px solid var(--gold); border-radius:12px; color:var(--mut); font-size:14.5px}
+  .statusline b{color:var(--txt)}
+  .shield{margin:12px 0 0; padding:12px 14px; background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; display:flex; gap:10px; align-items:flex-start; font-size:14.5px}
+  .shield .ic{font-size:22px}
+  .shield b{color:var(--grn)}
+  .card{margin:16px 0 0; background:var(--panel); border:1px solid var(--line); border-radius:var(--rad); padding:18px}
+  .card h2{margin:0 0 6px; font-size:19px}
+  .card p.sub{margin:0 0 12px; color:var(--mut); font-size:14.5px}
+  .btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; min-height:52px;
+    padding:12px 20px; border-radius:12px; border:1px solid var(--gold); background:var(--gold);
+    color:#14100a; font-weight:800; font-size:16px; cursor:pointer; width:100%}
+  .btn.ghost{background:transparent; color:var(--gold2); border-color:var(--line)}
+  .btn:disabled{opacity:.45; cursor:not-allowed}
+  .btn.small{width:auto; min-height:48px}
+  .addr{word-break:break-all; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13.5px;
+    background:var(--panel2); border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-top:10px}
+  .warn{color:var(--red); font-size:14px; margin-top:10px}
+  .ok{color:var(--grn); font-size:14px; margin-top:10px}
+  label.f{display:block; font-weight:700; margin:16px 0 6px; font-size:15px}
+  label.f:first-of-type{margin-top:4px}
+  input[type=text], input[type=number], textarea, select.inp{
+    width:100%; min-height:50px; background:var(--panel2); color:var(--txt); border:1px solid var(--line);
+    border-radius:12px; padding:12px; font-size:16px; font-family:inherit}
+  textarea{min-height:110px; resize:vertical}
+  .seg{display:flex; gap:8px}
+  .seg button{flex:1; min-height:52px; border-radius:12px; border:1px solid var(--line);
+    background:var(--panel2); color:var(--mut); font-weight:800; font-size:15px; cursor:pointer; padding:8px}
+  .seg button.on{border-color:var(--gold); color:#14100a; background:var(--gold)}
+  .help{color:var(--mut); font-size:13.5px; margin-top:6px}
+  .filebox{border:1.5px dashed var(--line); border-radius:12px; padding:16px; text-align:center; background:var(--panel2)}
+  .filebox input{display:none}
+  .filebox .pick{display:inline-block; min-height:48px; line-height:48px; padding:0 22px; border-radius:12px;
+    background:var(--gold); color:#14100a; font-weight:800; cursor:pointer}
+  .fileinfo{margin-top:10px; font-size:14px; color:var(--mut); word-break:break-all}
+  .fileinfo b{color:var(--txt)}
+  .hash{font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12.5px; word-break:break-all}
+  table.rev{width:100%; border-collapse:collapse; margin-top:6px}
+  table.rev td{padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top; font-size:14.5px}
+  table.rev td.k{color:var(--mut); width:38%; font-weight:700}
+  table.rev td.v{word-break:break-word; white-space:pre-wrap}
+  .bar{height:14px; background:var(--panel2); border:1px solid var(--line); border-radius:8px; overflow:hidden; margin:8px 0 4px}
+  .bar i{display:block; height:100%; background:linear-gradient(90deg,var(--gold),var(--gold2)); width:0%}
+  .rowbtns{display:flex; gap:10px; margin-top:16px; flex-wrap:wrap}
+  .rowbtns .btn{flex:1; min-width:150px}
+  .hidden{display:none !important}
+  footer{margin-top:22px; color:var(--mut); font-size:13.5px; text-align:center; padding:0 8px}
+  .statgrid{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px}
+  .stat{background:var(--panel2); border:1px solid var(--line); border-radius:12px; padding:10px 12px}
+  .stat .k{color:var(--mut); font-size:12.5px; font-weight:700; text-transform:uppercase; letter-spacing:.6px}
+  .stat .v{font-size:15.5px; font-weight:700; margin-top:2px; word-break:break-word}
+  a{color:var(--gold2)}
+  [dir=rtl] .statusline{border-left:1px solid var(--line); border-right:4px solid var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="moon">☾</div>
+    <div class="brand">LUNC DEV STUDIO<small data-i18n="brand_sub">PROPOSAL TOOL</small></div>
+    <div class="sp"></div>
+    <select id="lang" aria-label="Language"></select>
+  </header>
+
+  <div class="statusline" data-i18n-html="status_line"><b>Ready for launch.</b> Part of the LUNC Dev Studio creator flow. You prepare the proposal here — your own wallet signs it. This page never holds your keys.</div>
+
+  <div class="shield">
+    <div class="ic">🛡️</div>
+    <div data-i18n-html="shield"><b>Security first:</b> the page only builds the proposal. Your wallet shows it and you approve it there. Nothing is signed blind, and no key ever touches this page.</div>
+  </div>
+
+  <!-- CONNECT -->
+  <section class="card" id="card-connect">
+    <h2 data-i18n="connect_h">1 · Connect your wallet</h2>
+    <p class="sub" data-i18n="connect_sub">Keplr wallet (browser extension). Your address appears here — nothing else is shared.</p>
+    <button class="btn" id="btn-connect" data-i18n="connect_btn">🦊 Connect Keplr wallet</button>
+    <div class="addr hidden" id="myaddr"></div>
+    <div class="warn hidden" id="keplr-missing" data-i18n="keplr_missing">Keplr was not found in this browser. Install Keplr, then reload — you can still fill in and review the whole proposal without it.</div>
+  </section>
+
+  <!-- FORM -->
+  <section class="card" id="card-form">
+    <h2 data-i18n="form_h">2 · Write the proposal</h2>
+    <label class="f" data-i18n="type_label">Proposal type</label>
+    <div class="seg" id="type-seg">
+      <button type="button" data-type="store" class="on" data-i18n="type_store">📦 Store Code (new contract code)</button>
+      <button type="button" data-type="text" data-i18n="type_text">📜 Text (signaling only)</button>
+    </div>
+
+    <label class="f" for="f-title" data-i18n="title_label">Title</label>
+    <input type="text" id="f-title" maxlength="140" data-i18n-ph="title_ph" placeholder="e.g. Store Code: My Project v1">
+    <label class="f" for="f-desc" data-i18n="desc_label">Description — plain words</label>
+    <textarea id="f-desc" maxlength="4000" data-i18n-ph="desc_ph" placeholder="What is this code, who is it for, and why should voters say yes?"></textarea>
+    <label class="f" for="f-meta" data-i18n="meta_label">Discussion link (optional)</label>
+    <input type="text" id="f-meta" maxlength="300" data-i18n-ph="meta_ph" placeholder="Link to the forum post about this proposal">
+
+    <div id="wasm-block">
+      <label class="f" data-i18n="wasm_label">Contract code file (.wasm)</label>
+      <div class="filebox">
+        <label class="pick" for="f-wasm" data-i18n="wasm_pick">Choose .wasm file</label>
+        <input type="file" id="f-wasm" accept=".wasm">
+        <div class="fileinfo" id="wasm-info" data-i18n="wasm_none">No file chosen yet.</div>
+      </div>
+      <label class="f" for="f-perm" data-i18n="perm_label">Who may start (instantiate) this code?</label>
+      <select class="inp" id="f-perm">
+        <option value="default" data-i18n="perm_default">Chain default (same as most proposals)</option>
+        <option value="any" data-i18n="perm_any">Any wallet</option>
+        <option value="me" data-i18n="perm_me">Only my wallet</option>
+        <option value="nobody" data-i18n="perm_nobody">Nobody</option>
+      </select>
+    </div>
+
+    <label class="f" for="f-deposit" data-i18n="dep_label">Your starting deposit (LUNC)</label>
+    <input type="number" id="f-deposit" min="0" step="any" value="5000000">
+    <div class="help" id="dep-help"></div>
+
+    <div class="rowbtns">
+      <button class="btn" id="btn-review" data-i18n="review_btn">Review proposal →</button>
+    </div>
+    <div class="warn hidden" id="form-err"></div>
+  </section>
+
+  <!-- REVIEW -->
+  <section class="card hidden" id="card-review">
+    <h2 data-i18n="review_h">3 · Review — check everything before you sign</h2>
+    <p class="sub" data-i18n="review_sub">This is exactly what will be submitted. If anything looks wrong, go back and fix it — a submitted proposal is public and permanent.</p>
+    <table class="rev"><tbody id="rev-body"></tbody></table>
+    <div class="rowbtns">
+      <button class="btn ghost" id="btn-back" data-i18n="back_btn">← Back</button>
+      <button class="btn" id="btn-submit" data-i18n="submit_btn">Submit in my wallet</button>
+    </div>
+    <div class="help" data-i18n="submit_note">Submitting opens your wallet. You approve (sign) there — the page cannot sign for you. A normal network fee (LUNC) applies, estimated in your wallet.</div>
+    <div class="warn hidden" id="submit-err"></div>
+    <div class="ok hidden" id="submit-ok"></div>
+  </section>
+
+  <!-- TRACK -->
+  <section class="card" id="card-track">
+    <h2 data-i18n="track_h">4 · Track a proposal</h2>
+    <p class="sub" data-i18n="track_sub">Live status straight from the chain.</p>
+    <label class="f" for="f-propid" data-i18n="track_label">Proposal number</label>
+    <div style="display:flex; gap:10px; flex-wrap:wrap">
+      <input type="number" id="f-propid" min="1" step="1" style="flex:1; min-width:140px" placeholder="e.g. 12235">
+      <button class="btn small" id="btn-track" data-i18n="track_btn">Load</button>
+    </div>
+    <div id="track-out" class="hidden">
+      <div class="statgrid">
+        <div class="stat"><div class="k" data-i18n="st_title">Title</div><div class="v" id="t-title">—</div></div>
+        <div class="stat"><div class="k" data-i18n="st_status">Status</div><div class="v" id="t-status">—</div></div>
+        <div class="stat"><div class="k" data-i18n="st_deposit">Deposit so far</div><div class="v" id="t-dep">—</div></div>
+        <div class="stat"><div class="k" data-i18n="st_clock">Clock</div><div class="v" id="t-clock">—</div></div>
+      </div>
+      <div class="bar"><i id="t-bar"></i></div>
+      <div class="help" id="t-barhelp"></div>
+      <div id="adddep-block" class="hidden">
+        <label class="f" for="f-adddep" data-i18n="adddep_label">Add deposit (LUNC) — support this proposal</label>
+        <div style="display:flex; gap:10px; flex-wrap:wrap">
+          <input type="number" id="f-adddep" min="0" step="any" style="flex:1; min-width:140px" placeholder="0">
+          <button class="btn small" id="btn-adddep" data-i18n="adddep_btn">Add deposit in my wallet</button>
+        </div>
+        <div class="warn hidden" id="adddep-err"></div>
+        <div class="ok hidden" id="adddep-ok"></div>
+      </div>
+    </div>
+    <div class="warn hidden" id="track-err"></div>
+  </section>
+
+  <footer data-i18n="footer">LUNC DEV STUDIO · Proposals are public and permanent on-chain. If a proposal is vetoed, its deposit is burned. Deposit amounts and timings shown are read live from the chain.</footer>
+</div>
+<script>
+const LANGS=[["en","English"],["es","Español"],["pt","Português"],["fr","Français"],["de","Deutsch"],["it","Italiano"],["nl","Nederlands"],["ru","Русский"],["uk","Українська"],["tr","Türkçe"],["ar","العربية"],["hi","हिन्दी"],["id","Bahasa Indonesia"],["vi","Tiếng Việt"],["th","ไทย"],["ko","한국어"],["ja","日本語"],["zh","中文"]];
+const I18N={
+en:{brand_sub:"PROPOSAL TOOL",status_line:"<b>Ready for launch.</b> Part of the LUNC Dev Studio creator flow. You prepare the proposal here — your own wallet signs it. This page never holds your keys.",shield:"<b>Security first:</b> the page only builds the proposal. Your wallet shows it and you approve it there. Nothing is signed blind, and no key ever touches this page.",connect_h:"1 · Connect your wallet",connect_sub:"Keplr wallet (browser extension). Your address appears here — nothing else is shared.",connect_btn:"🦊 Connect Keplr wallet",keplr_missing:"Keplr was not found in this browser. Install Keplr, then reload — you can still fill in and review the whole proposal without it.",connected_as:"Connected:",form_h:"2 · Write the proposal",type_label:"Proposal type",type_store:"📦 Store Code (new contract code)",type_text:"📜 Text (signaling only)",title_label:"Title",title_ph:"e.g. Store Code: My Project v1",desc_label:"Description — plain words",desc_ph:"What is this code, who is it for, and why should voters say yes?",meta_label:"Discussion link (optional)",meta_ph:"Link to the forum post about this proposal",wasm_label:"Contract code file (.wasm)",wasm_pick:"Choose .wasm file",wasm_none:"No file chosen yet.",wasm_info:"File: {name} · Size: {size} · SHA-256: {hash}",perm_label:"Who may start (instantiate) this code?",perm_default:"Chain default (same as most proposals)",perm_any:"Any wallet",perm_me:"Only my wallet",perm_nobody:"Nobody",dep_label:"Your starting deposit (LUNC)",dep_help:"Live from the chain: a proposal needs {full} LUNC total within {days} days to reach a vote. You must start with at least {min} LUNC — anyone can top it up later. Voting then runs {vdays} days.",review_btn:"Review proposal →",review_h:"3 · Review — check everything before you sign",review_sub:"This is exactly what will be submitted. If anything looks wrong, go back and fix it — a submitted proposal is public and permanent.",back_btn:"← Back",submit_btn:"Submit in my wallet",submit_note:"Submitting opens your wallet. You approve (sign) there — the page cannot sign for you. A normal network fee (LUNC) applies, estimated in your wallet.",track_h:"4 · Track a proposal",track_sub:"Live status straight from the chain.",track_label:"Proposal number",track_btn:"Load",st_title:"Title",st_status:"Status",st_deposit:"Deposit so far",st_clock:"Clock",adddep_label:"Add deposit (LUNC) — support this proposal",adddep_btn:"Add deposit in my wallet",footer:"LUNC DEV STUDIO · Proposals are public and permanent on-chain. If a proposal is vetoed, its deposit is burned. Deposit amounts and timings shown are read live from the chain.",r_type:"Type",r_title:"Title",r_desc:"Description",r_meta:"Metadata",r_code:"Code file",r_codesha:"Code SHA-256",r_perm:"Instantiate permission",r_deposit:"Your deposit",r_proposer:"Proposer (you)",r_sender:"Code is stored by",r_chain:"Chain",none_text:"(none)",err_title:"Give the proposal a title.",err_desc:"Write a short description in plain words.",err_wasm:"Choose the .wasm code file first.",err_wasmmagic:"That file does not look like a .wasm file.",err_depmin:"Starting deposit must be at least {min} LUNC (the chain minimum to submit).",err_nowallet:"Connect your Keplr wallet first — your wallet signs the proposal.",err_lib:"Could not load the signing library. Check your connection and try again.",submitting:"Waiting for your wallet…",submitted:"Submitted! Proposal number: {id}. Transaction: {tx}",view_tx:"View transaction",s_deposit:"Collecting deposit",s_voting:"Voting now",s_passed:"Passed",s_rejected:"Rejected",s_failed:"Failed",clock_deposit:"Deposit window ends {when}",clock_voting:"Voting ends {when}",clock_done:"Finished",bar_help:"{have} of {need} LUNC needed to reach a vote",adddep_ok:"Deposit added. Transaction: {tx}",track_notfound:"Proposal not found on the chain. Check the number.",need_connect:"Connect your wallet above first.",gov_addr:"the governance account (automatic)"},
+es:{brand_sub:"HERRAMIENTA DE PROPUESTAS",status_line:"<b>Lista para el lanzamiento.</b> Parte del flujo para creadores de LUNC Dev Studio. Tú preparas la propuesta aquí — tu propia billetera la firma. Esta página nunca guarda tus claves.",shield:"<b>Seguridad primero:</b> la página solo crea la propuesta. Tu billetera la muestra y tú la apruebas allí. Nada se firma a ciegas y ninguna clave toca esta página.",connect_h:"1 · Conecta tu billetera",connect_sub:"Billetera Keplr (extensión del navegador). Tu dirección aparece aquí — no se comparte nada más.",connect_btn:"🦊 Conectar billetera Keplr",keplr_missing:"No se encontró Keplr en este navegador. Instala Keplr y recarga — aún puedes completar y revisar toda la propuesta sin él.",connected_as:"Conectado:",form_h:"2 · Escribe la propuesta",type_label:"Tipo de propuesta",type_store:"📦 Store Code (código de contrato nuevo)",type_text:"📜 Texto (solo señalización)",title_label:"Título",title_ph:"ej. Store Code: Mi Proyecto v1",desc_label:"Descripción — en palabras simples",desc_ph:"¿Qué es este código, para quién es y por qué deberían votar sí?",meta_label:"Enlace de discusión (opcional)",meta_ph:"Enlace a la publicación del foro sobre esta propuesta",wasm_label:"Archivo de código del contrato (.wasm)",wasm_pick:"Elegir archivo .wasm",wasm_none:"Aún no se eligió ningún archivo.",wasm_info:"Archivo: {name} · Tamaño: {size} · SHA-256: {hash}",perm_label:"¿Quién puede iniciar (instanciar) este código?",perm_default:"Predeterminado de la cadena (como la mayoría)",perm_any:"Cualquier billetera",perm_me:"Solo mi billetera",perm_nobody:"Nadie",dep_label:"Tu depósito inicial (LUNC)",dep_help:"En vivo desde la cadena: una propuesta necesita {full} LUNC en total dentro de {days} días para llegar a votación. Debes empezar con al menos {min} LUNC — cualquiera puede completarlo después. La votación dura {vdays} días.",review_btn:"Revisar propuesta →",review_h:"3 · Revisa — comprueba todo antes de firmar",review_sub:"Esto es exactamente lo que se enviará. Si algo se ve mal, vuelve y corrígelo — una propuesta enviada es pública y permanente.",back_btn:"← Atrás",submit_btn:"Enviar en mi billetera",submit_note:"Al enviar se abre tu billetera. Tú apruebas (firmas) allí — la página no puede firmar por ti. Se aplica una tarifa de red normal (LUNC), estimada en tu billetera.",track_h:"4 · Sigue una propuesta",track_sub:"Estado en vivo directamente desde la cadena.",track_label:"Número de propuesta",track_btn:"Cargar",st_title:"Título",st_status:"Estado",st_deposit:"Depósito hasta ahora",st_clock:"Reloj",adddep_label:"Añadir depósito (LUNC) — apoya esta propuesta",adddep_btn:"Añadir depósito en mi billetera",footer:"LUNC DEV STUDIO · Las propuestas son públicas y permanentes en la cadena. Si una propuesta es vetada, su depósito se quema. Los montos y tiempos se leen en vivo desde la cadena.",r_type:"Tipo",r_title:"Título",r_desc:"Descripción",r_meta:"Metadatos",r_code:"Archivo de código",r_codesha:"SHA-256 del código",r_perm:"Permiso de instanciación",r_deposit:"Tu depósito",r_proposer:"Proponente (tú)",r_sender:"El código lo almacena",r_chain:"Cadena",none_text:"(ninguno)",err_title:"Dale un título a la propuesta.",err_desc:"Escribe una descripción breve en palabras simples.",err_wasm:"Primero elige el archivo de código .wasm.",err_wasmmagic:"Ese archivo no parece un archivo .wasm.",err_depmin:"El depósito inicial debe ser al menos {min} LUNC (el mínimo de la cadena para enviar).",err_nowallet:"Primero conecta tu billetera Keplr — tu billetera firma la propuesta.",err_lib:"No se pudo cargar la biblioteca de firma. Revisa tu conexión e inténtalo de nuevo.",submitting:"Esperando tu billetera…",submitted:"¡Enviada! Número de propuesta: {id}. Transacción: {tx}",view_tx:"Ver transacción",s_deposit:"Recolectando depósito",s_voting:"Votando ahora",s_passed:"Aprobada",s_rejected:"Rechazada",s_failed:"Fallida",clock_deposit:"El depósito cierra {when}",clock_voting:"La votación termina {when}",clock_done:"Terminada",bar_help:"{have} de {need} LUNC necesarios para llegar a votación",adddep_ok:"Depósito añadido. Transacción: {tx}",track_notfound:"Propuesta no encontrada en la cadena. Revisa el número.",need_connect:"Primero conecta tu billetera arriba.",gov_addr:"la cuenta de gobernanza (automático)"},
+pt:{brand_sub:"FERRAMENTA DE PROPOSTAS",status_line:"<b>Pronta para o lançamento.</b> Parte do fluxo de criadores da LUNC Dev Studio. Você prepara a proposta aqui — sua própria carteira a assina. Esta página nunca guarda suas chaves.",shield:"<b>Segurança primeiro:</b> a página apenas monta a proposta. Sua carteira a mostra e você aprova lá. Nada é assinado às cegas e nenhuma chave toca esta página.",connect_h:"1 · Conecte sua carteira",connect_sub:"Carteira Keplr (extensão do navegador). Seu endereço aparece aqui — nada mais é compartilhado.",connect_btn:"🦊 Conectar carteira Keplr",keplr_missing:"Keplr não foi encontrado neste navegador. Instale o Keplr e recarregue — você ainda pode preencher e revisar toda a proposta sem ele.",connected_as:"Conectado:",form_h:"2 · Escreva a proposta",type_label:"Tipo de proposta",type_store:"📦 Store Code (novo código de contrato)",type_text:"📜 Texto (apenas sinalização)",title_label:"Título",title_ph:"ex. Store Code: Meu Projeto v1",desc_label:"Descrição — em palavras simples",desc_ph:"O que é este código, para quem é e por que os votantes devem dizer sim?",meta_label:"Link de discussão (opcional)",meta_ph:"Link para a postagem do fórum sobre esta proposta",wasm_label:"Arquivo de código do contrato (.wasm)",wasm_pick:"Escolher arquivo .wasm",wasm_none:"Nenhum arquivo escolhido ainda.",wasm_info:"Arquivo: {name} · Tamanho: {size} · SHA-256: {hash}",perm_label:"Quem pode iniciar (instanciar) este código?",perm_default:"Padrão da rede (como a maioria das propostas)",perm_any:"Qualquer carteira",perm_me:"Somente minha carteira",perm_nobody:"Ninguém",dep_label:"Seu depósito inicial (LUNC)",dep_help:"Ao vivo da rede: uma proposta precisa de {full} LUNC no total em até {days} dias para chegar à votação. Você deve começar com pelo menos {min} LUNC — qualquer um pode completar depois. A votação dura {vdays} dias.",review_btn:"Revisar proposta →",review_h:"3 · Revise — confira tudo antes de assinar",review_sub:"Isto é exatamente o que será enviado. Se algo parecer errado, volte e corrija — uma proposta enviada é pública e permanente.",back_btn:"← Voltar",submit_btn:"Enviar na minha carteira",submit_note:"Ao enviar, sua carteira abre. Você aprova (assina) lá — a página não pode assinar por você. Vale a taxa normal de rede (LUNC), estimada na sua carteira.",track_h:"4 · Acompanhe uma proposta",track_sub:"Status ao vivo direto da rede.",track_label:"Número da proposta",track_btn:"Carregar",st_title:"Título",st_status:"Status",st_deposit:"Depósito até agora",st_clock:"Relógio",adddep_label:"Adicionar depósito (LUNC) — apoie esta proposta",adddep_btn:"Adicionar depósito na minha carteira",footer:"LUNC DEV STUDIO · Propostas são públicas e permanentes na rede. Se uma proposta for vetada, seu depósito é queimado. Valores e prazos são lidos ao vivo da rede.",r_type:"Tipo",r_title:"Título",r_desc:"Descrição",r_meta:"Metadados",r_code:"Arquivo de código",r_codesha:"SHA-256 do código",r_perm:"Permissão de instanciação",r_deposit:"Seu depósito",r_proposer:"Proponente (você)",r_sender:"O código é armazenado por",r_chain:"Rede",none_text:"(nenhum)",err_title:"Dê um título à proposta.",err_desc:"Escreva uma descrição curta em palavras simples.",err_wasm:"Primeiro escolha o arquivo de código .wasm.",err_wasmmagic:"Esse arquivo não parece um arquivo .wasm.",err_depmin:"O depósito inicial deve ser de pelo menos {min} LUNC (mínimo da rede para enviar).",err_nowallet:"Primeiro conecte sua carteira Keplr — sua carteira assina a proposta.",err_lib:"Não foi possível carregar a biblioteca de assinatura. Verifique sua conexão e tente de novo.",submitting:"Aguardando sua carteira…",submitted:"Enviada! Número da proposta: {id}. Transação: {tx}",view_tx:"Ver transação",s_deposit:"Coletando depósito",s_voting:"Votando agora",s_passed:"Aprovada",s_rejected:"Rejeitada",s_failed:"Falhou",clock_deposit:"O depósito termina {when}",clock_voting:"A votação termina {when}",clock_done:"Encerrada",bar_help:"{have} de {need} LUNC necessários para chegar à votação",adddep_ok:"Depósito adicionado. Transação: {tx}",track_notfound:"Proposta não encontrada na rede. Verifique o número.",need_connect:"Primeiro conecte sua carteira acima.",gov_addr:"a conta de governança (automático)"},
+fr:{brand_sub:"OUTIL DE PROPOSITIONS",status_line:"<b>Prêt pour le lancement.</b> Fait partie du parcours créateur LUNC Dev Studio. Vous préparez la proposition ici — votre propre portefeuille la signe. Cette page ne détient jamais vos clés.",shield:"<b>La sécurité d'abord :</b> la page construit seulement la proposition. Votre portefeuille l'affiche et vous l'approuvez là-bas. Rien n'est signé à l'aveugle et aucune clé ne touche cette page.",connect_h:"1 · Connectez votre portefeuille",connect_sub:"Portefeuille Keplr (extension de navigateur). Votre adresse apparaît ici — rien d'autre n'est partagé.",connect_btn:"🦊 Connecter le portefeuille Keplr",keplr_missing:"Keplr est introuvable dans ce navigateur. Installez Keplr puis rechargez — vous pouvez quand même remplir et vérifier toute la proposition sans lui.",connected_as:"Connecté :",form_h:"2 · Rédigez la proposition",type_label:"Type de proposition",type_store:"📦 Store Code (nouveau code de contrat)",type_text:"📜 Texte (signalisation uniquement)",title_label:"Titre",title_ph:"ex. Store Code : Mon Projet v1",desc_label:"Description — en mots simples",desc_ph:"Qu'est-ce que ce code, pour qui, et pourquoi voter oui ?",meta_label:"Lien de discussion (optionnel)",meta_ph:"Lien vers le sujet de forum sur cette proposition",wasm_label:"Fichier de code du contrat (.wasm)",wasm_pick:"Choisir un fichier .wasm",wasm_none:"Aucun fichier choisi pour le moment.",wasm_info:"Fichier : {name} · Taille : {size} · SHA-256 : {hash}",perm_label:"Qui peut démarrer (instancier) ce code ?",perm_default:"Par défaut de la chaîne (comme la plupart)",perm_any:"N'importe quel portefeuille",perm_me:"Uniquement mon portefeuille",perm_nobody:"Personne",dep_label:"Votre dépôt de départ (LUNC)",dep_help:"En direct de la chaîne : une proposition a besoin de {full} LUNC au total sous {days} jours pour passer au vote. Vous devez commencer avec au moins {min} LUNC — n'importe qui peut compléter ensuite. Le vote dure ensuite {vdays} jours.",review_btn:"Vérifier la proposition →",review_h:"3 · Vérifiez — tout contrôler avant de signer",review_sub:"C'est exactement ce qui sera soumis. Si quelque chose semble faux, revenez et corrigez — une proposition soumise est publique et permanente.",back_btn:"← Retour",submit_btn:"Soumettre dans mon portefeuille",submit_note:"La soumission ouvre votre portefeuille. Vous approuvez (signez) là-bas — la page ne peut pas signer pour vous. Des frais réseau normaux (LUNC) s'appliquent, estimés dans votre portefeuille.",track_h:"4 · Suivre une proposition",track_sub:"Statut en direct, directement depuis la chaîne.",track_label:"Numéro de proposition",track_btn:"Charger",st_title:"Titre",st_status:"Statut",st_deposit:"Dépôt actuel",st_clock:"Horloge",adddep_label:"Ajouter un dépôt (LUNC) — soutenez cette proposition",adddep_btn:"Ajouter le dépôt dans mon portefeuille",footer:"LUNC DEV STUDIO · Les propositions sont publiques et permanentes sur la chaîne. Si une proposition est rejetée par veto, son dépôt est brûlé. Montants et délais sont lus en direct depuis la chaîne.",r_type:"Type",r_title:"Titre",r_desc:"Description",r_meta:"Métadonnées",r_code:"Fichier de code",r_codesha:"SHA-256 du code",r_perm:"Permission d'instanciation",r_deposit:"Votre dépôt",r_proposer:"Proposant (vous)",r_sender:"Le code est stocké par",r_chain:"Chaîne",none_text:"(aucun)",err_title:"Donnez un titre à la proposition.",err_desc:"Écrivez une courte description en mots simples.",err_wasm:"Choisissez d'abord le fichier de code .wasm.",err_wasmmagic:"Ce fichier ne ressemble pas à un fichier .wasm.",err_depmin:"Le dépôt de départ doit être d'au moins {min} LUNC (minimum de la chaîne pour soumettre).",err_nowallet:"Connectez d'abord votre portefeuille Keplr — votre portefeuille signe la proposition.",err_lib:"Impossible de charger la bibliothèque de signature. Vérifiez votre connexion et réessayez.",submitting:"En attente de votre portefeuille…",submitted:"Soumise ! Numéro de proposition : {id}. Transaction : {tx}",view_tx:"Voir la transaction",s_deposit:"Collecte du dépôt",s_voting:"Vote en cours",s_passed:"Adoptée",s_rejected:"Rejetée",s_failed:"Échouée",clock_deposit:"La fenêtre de dépôt se termine {when}",clock_voting:"Le vote se termine {when}",clock_done:"Terminée",bar_help:"{have} sur {need} LUNC nécessaires pour passer au vote",adddep_ok:"Dépôt ajouté. Transaction : {tx}",track_notfound:"Proposition introuvable sur la chaîne. Vérifiez le numéro.",need_connect:"Connectez d'abord votre portefeuille ci-dessus.",gov_addr:"le compte de gouvernance (automatique)"},
+de:{brand_sub:"VORSCHLAGS-WERKZEUG",status_line:"<b>Bereit für den Start.</b> Teil des Creator-Ablaufs von LUNC Dev Studio. Sie bereiten den Vorschlag hier vor — Ihre eigene Wallet unterschreibt ihn. Diese Seite hält niemals Ihre Schlüssel.",shield:"<b>Sicherheit zuerst:</b> Die Seite baut nur den Vorschlag. Ihre Wallet zeigt ihn an und Sie genehmigen ihn dort. Nichts wird blind unterschrieben, und kein Schlüssel berührt diese Seite.",connect_h:"1 · Wallet verbinden",connect_sub:"Keplr-Wallet (Browser-Erweiterung). Ihre Adresse erscheint hier — sonst wird nichts geteilt.",connect_btn:"🦊 Keplr-Wallet verbinden",keplr_missing:"Keplr wurde in diesem Browser nicht gefunden. Installieren Sie Keplr und laden Sie neu — Sie können den Vorschlag trotzdem komplett ausfüllen und prüfen.",connected_as:"Verbunden:",form_h:"2 · Vorschlag schreiben",type_label:"Vorschlagstyp",type_store:"📦 Store Code (neuer Vertragscode)",type_text:"📜 Text (nur Signal)",title_label:"Titel",title_ph:"z. B. Store Code: Mein Projekt v1",desc_label:"Beschreibung — in einfachen Worten",desc_ph:"Was ist dieser Code, für wen ist er, und warum sollten Wähler Ja sagen?",meta_label:"Diskussionslink (optional)",meta_ph:"Link zum Forumsbeitrag zu diesem Vorschlag",wasm_label:"Vertragscode-Datei (.wasm)",wasm_pick:".wasm-Datei wählen",wasm_none:"Noch keine Datei gewählt.",wasm_info:"Datei: {name} · Größe: {size} · SHA-256: {hash}",perm_label:"Wer darf diesen Code starten (instanziieren)?",perm_default:"Standard der Kette (wie die meisten Vorschläge)",perm_any:"Jede Wallet",perm_me:"Nur meine Wallet",perm_nobody:"Niemand",dep_label:"Ihre Start-Einlage (LUNC)",dep_help:"Live von der Kette: Ein Vorschlag braucht insgesamt {full} LUNC innerhalb von {days} Tagen, um zur Abstimmung zu gelangen. Sie müssen mit mindestens {min} LUNC starten — jeder kann später aufstocken. Die Abstimmung läuft dann {vdays} Tage.",review_btn:"Vorschlag prüfen →",review_h:"3 · Prüfen — alles kontrollieren, bevor Sie unterschreiben",review_sub:"Genau das wird eingereicht. Wenn etwas falsch aussieht, gehen Sie zurück und korrigieren Sie es — ein eingereichter Vorschlag ist öffentlich und endgültig.",back_btn:"← Zurück",submit_btn:"In meiner Wallet einreichen",submit_note:"Beim Einreichen öffnet sich Ihre Wallet. Sie genehmigen (unterschreiben) dort — die Seite kann nicht für Sie unterschreiben. Es gilt eine normale Netzwerkgebühr (LUNC), die in Ihrer Wallet geschätzt wird.",track_h:"4 · Vorschlag verfolgen",track_sub:"Live-Status direkt von der Kette.",track_label:"Vorschlagsnummer",track_btn:"Laden",st_title:"Titel",st_status:"Status",st_deposit:"Einlage bisher",st_clock:"Uhr",adddep_label:"Einlage hinzufügen (LUNC) — diesen Vorschlag unterstützen",adddep_btn:"Einlage in meiner Wallet hinzufügen",footer:"LUNC DEV STUDIO · Vorschläge sind öffentlich und endgültig auf der Kette. Wird ein Vorschlag per Veto abgelehnt, wird seine Einlage verbrannt. Beträge und Zeiten werden live von der Kette gelesen.",r_type:"Typ",r_title:"Titel",r_desc:"Beschreibung",r_meta:"Metadaten",r_code:"Code-Datei",r_codesha:"Code SHA-256",r_perm:"Instanziierungs-Erlaubnis",r_deposit:"Ihre Einlage",r_proposer:"Einreicher (Sie)",r_sender:"Code wird gespeichert von",r_chain:"Kette",none_text:"(keine)",err_title:"Geben Sie dem Vorschlag einen Titel.",err_desc:"Schreiben Sie eine kurze Beschreibung in einfachen Worten.",err_wasm:"Wählen Sie zuerst die .wasm-Code-Datei.",err_wasmmagic:"Diese Datei sieht nicht wie eine .wasm-Datei aus.",err_depmin:"Die Start-Einlage muss mindestens {min} LUNC betragen (Ketten-Minimum zum Einreichen).",err_nowallet:"Verbinden Sie zuerst Ihre Keplr-Wallet — Ihre Wallet unterschreibt den Vorschlag.",err_lib:"Die Signatur-Bibliothek konnte nicht geladen werden. Prüfen Sie Ihre Verbindung und versuchen Sie es erneut.",submitting:"Warte auf Ihre Wallet…",submitted:"Eingereicht! Vorschlagsnummer: {id}. Transaktion: {tx}",view_tx:"Transaktion ansehen",s_deposit:"Einlage wird gesammelt",s_voting:"Abstimmung läuft",s_passed:"Angenommen",s_rejected:"Abgelehnt",s_failed:"Fehlgeschlagen",clock_deposit:"Einlagen-Fenster endet {when}",clock_voting:"Abstimmung endet {when}",clock_done:"Beendet",bar_help:"{have} von {need} LUNC nötig, um zur Abstimmung zu gelangen",adddep_ok:"Einlage hinzugefügt. Transaktion: {tx}",track_notfound:"Vorschlag auf der Kette nicht gefunden. Prüfen Sie die Nummer.",need_connect:"Verbinden Sie zuerst oben Ihre Wallet.",gov_addr:"das Governance-Konto (automatisch)"},
+it:{brand_sub:"STRUMENTO PROPOSTE",status_line:"<b>Pronto per il lancio.</b> Parte del flusso creatori di LUNC Dev Studio. Prepari la proposta qui — la firma il tuo portafoglio. Questa pagina non detiene mai le tue chiavi.",shield:"<b>Sicurezza prima di tutto:</b> la pagina costruisce solo la proposta. Il tuo portafoglio la mostra e tu la approvi lì. Niente viene firmato alla cieca e nessuna chiave tocca questa pagina.",connect_h:"1 · Collega il tuo portafoglio",connect_sub:"Portafoglio Keplr (estensione del browser). Il tuo indirizzo appare qui — nient'altro viene condiviso.",connect_btn:"🦊 Collega portafoglio Keplr",keplr_missing:"Keplr non è stato trovato in questo browser. Installa Keplr e ricarica — puoi comunque compilare e rivedere l'intera proposta senza.",connected_as:"Collegato:",form_h:"2 · Scrivi la proposta",type_label:"Tipo di proposta",type_store:"📦 Store Code (nuovo codice contratto)",type_text:"📜 Testo (solo segnalazione)",title_label:"Titolo",title_ph:"es. Store Code: Il Mio Progetto v1",desc_label:"Descrizione — in parole semplici",desc_ph:"Cos'è questo codice, per chi è e perché i votanti dovrebbero dire sì?",meta_label:"Link alla discussione (opzionale)",meta_ph:"Link al post del forum su questa proposta",wasm_label:"File di codice del contratto (.wasm)",wasm_pick:"Scegli file .wasm",wasm_none:"Nessun file scelto ancora.",wasm_info:"File: {name} · Dimensione: {size} · SHA-256: {hash}",perm_label:"Chi può avviare (istanziare) questo codice?",perm_default:"Predefinito della catena (come la maggior parte)",perm_any:"Qualsiasi portafoglio",perm_me:"Solo il mio portafoglio",perm_nobody:"Nessuno",dep_label:"Il tuo deposito iniziale (LUNC)",dep_help:"In diretta dalla catena: una proposta ha bisogno di {full} LUNC totali entro {days} giorni per arrivare al voto. Devi iniziare con almeno {min} LUNC — chiunque può integrarlo dopo. Il voto dura poi {vdays} giorni.",review_btn:"Rivedi la proposta →",review_h:"3 · Rivedi — controlla tutto prima di firmare",review_sub:"Questo è esattamente ciò che verrà inviato. Se qualcosa sembra sbagliato, torna indietro e correggilo — una proposta inviata è pubblica e permanente.",back_btn:"← Indietro",submit_btn:"Invia nel mio portafoglio",submit_note:"L'invio apre il tuo portafoglio. Approvi (firmi) lì — la pagina non può firmare per te. Si applica una normale commissione di rete (LUNC), stimata nel tuo portafoglio.",track_h:"4 · Segui una proposta",track_sub:"Stato in diretta direttamente dalla catena.",track_label:"Numero della proposta",track_btn:"Carica",st_title:"Titolo",st_status:"Stato",st_deposit:"Deposito finora",st_clock:"Orologio",adddep_label:"Aggiungi deposito (LUNC) — sostieni questa proposta",adddep_btn:"Aggiungi deposito nel mio portafoglio",footer:"LUNC DEV STUDIO · Le proposte sono pubbliche e permanenti sulla catena. Se una proposta viene vetata, il suo deposito viene bruciato. Importi e tempi sono letti in diretta dalla catena.",r_type:"Tipo",r_title:"Titolo",r_desc:"Descrizione",r_meta:"Metadati",r_code:"File di codice",r_codesha:"SHA-256 del codice",r_perm:"Permesso di istanziazione",r_deposit:"Il tuo deposito",r_proposer:"Proponente (tu)",r_sender:"Il codice è memorizzato da",r_chain:"Catena",none_text:"(nessuno)",err_title:"Dai un titolo alla proposta.",err_desc:"Scrivi una breve descrizione in parole semplici.",err_wasm:"Scegli prima il file di codice .wasm.",err_wasmmagic:"Quel file non sembra un file .wasm.",err_depmin:"Il deposito iniziale deve essere almeno {min} LUNC (il minimo della catena per inviare).",err_nowallet:"Collega prima il tuo portafoglio Keplr — il tuo portafoglio firma la proposta.",err_lib:"Impossibile caricare la libreria di firma. Controlla la connessione e riprova.",submitting:"In attesa del tuo portafoglio…",submitted:"Inviata! Numero proposta: {id}. Transazione: {tx}",view_tx:"Vedi transazione",s_deposit:"Raccolta deposito in corso",s_voting:"Votazione in corso",s_passed:"Approvata",s_rejected:"Respinta",s_failed:"Fallita",clock_deposit:"La finestra di deposito termina {when}",clock_voting:"La votazione termina {when}",clock_done:"Terminata",bar_help:"{have} dei {need} LUNC necessari per arrivare al voto",adddep_ok:"Deposito aggiunto. Transazione: {tx}",track_notfound:"Proposta non trovata sulla catena. Controlla il numero.",need_connect:"Prima collega il tuo portafoglio sopra.",gov_addr:"l'account di governance (automatico)"},
+nl:{brand_sub:"VOORSTEL-TOOL",status_line:"<b>Klaar voor de lancering.</b> Onderdeel van de makersstroom van LUNC Dev Studio. Je bereidt het voorstel hier voor — je eigen wallet ondertekent het. Deze pagina bewaart nooit je sleutels.",shield:"<b>Veiligheid eerst:</b> de pagina bouwt alleen het voorstel. Je wallet toont het en jij keurt het daar goed. Niets wordt blind ondertekend en geen sleutel raakt deze pagina.",connect_h:"1 · Verbind je wallet",connect_sub:"Keplr-wallet (browserextensie). Je adres verschijnt hier — verder wordt niets gedeeld.",connect_btn:"🦊 Verbind Keplr-wallet",keplr_missing:"Keplr is niet gevonden in deze browser. Installeer Keplr en laad opnieuw — je kunt het hele voorstel toch invullen en controleren zonder.",connected_as:"Verbonden:",form_h:"2 · Schrijf het voorstel",type_label:"Type voorstel",type_store:"📦 Store Code (nieuwe contractcode)",type_text:"📜 Tekst (alleen signalering)",title_label:"Titel",title_ph:"bijv. Store Code: Mijn Project v1",desc_label:"Beschrijving — in gewone woorden",desc_ph:"Wat is deze code, voor wie is hij en waarom zouden stemmers ja zeggen?",meta_label:"Discussielink (optioneel)",meta_ph:"Link naar het forumbericht over dit voorstel",wasm_label:"Contractcodebestand (.wasm)",wasm_pick:"Kies .wasm-bestand",wasm_none:"Nog geen bestand gekozen.",wasm_info:"Bestand: {name} · Grootte: {size} · SHA-256: {hash}",perm_label:"Wie mag deze code starten (instantiëren)?",perm_default:"Standaard van de keten (zoals de meeste voorstellen)",perm_any:"Elke wallet",perm_me:"Alleen mijn wallet",perm_nobody:"Niemand",dep_label:"Je startstorting (LUNC)",dep_help:"Live van de keten: een voorstel heeft in totaal {full} LUNC nodig binnen {days} dagen om tot stemming te komen. Je moet beginnen met minstens {min} LUNC — iedereen kan later bijstorten. De stemming duurt daarna {vdays} dagen.",review_btn:"Voorstel controleren →",review_h:"3 · Controleer — bekijk alles vóór je ondertekent",review_sub:"Dit is precies wat wordt ingediend. Ziet iets er verkeerd uit, ga terug en herstel het — een ingediend voorstel is openbaar en permanent.",back_btn:"← Terug",submit_btn:"Indienen in mijn wallet",submit_note:"Bij indienen opent je wallet. Jij keurt daar goed (ondertekent) — de pagina kan niet namens jou ondertekenen. Er geldt een normale netwerkkost (LUNC), geschat in je wallet.",track_h:"4 · Volg een voorstel",track_sub:"Live status rechtstreeks van de keten.",track_label:"Voorstelnummer",track_btn:"Laden",st_title:"Titel",st_status:"Status",st_deposit:"Storting tot nu toe",st_clock:"Klok",adddep_label:"Storting toevoegen (LUNC) — steun dit voorstel",adddep_btn:"Storting toevoegen in mijn wallet",footer:"LUNC DEV STUDIO · Voorstellen zijn openbaar en permanent op de keten. Wordt een voorstel gevetood, dan wordt de storting verbrand. Bedragen en tijden worden live van de keten gelezen.",r_type:"Type",r_title:"Titel",r_desc:"Beschrijving",r_meta:"Metadata",r_code:"Codebestand",r_codesha:"SHA-256 van code",r_perm:"Instantiatie-toestemming",r_deposit:"Je storting",r_proposer:"Indiener (jij)",r_sender:"Code wordt opgeslagen door",r_chain:"Keten",none_text:"(geen)",err_title:"Geef het voorstel een titel.",err_desc:"Schrijf een korte beschrijving in gewone woorden.",err_wasm:"Kies eerst het .wasm-codebestand.",err_wasmmagic:"Dat bestand lijkt geen .wasm-bestand.",err_depmin:"De startstorting moet minstens {min} LUNC zijn (het ketenminimum om in te dienen).",err_nowallet:"Verbind eerst je Keplr-wallet — je wallet ondertekent het voorstel.",err_lib:"De ondertekenbibliotheek kon niet worden geladen. Controleer je verbinding en probeer opnieuw.",submitting:"Wachten op je wallet…",submitted:"Ingediend! Voorstelnummer: {id}. Transactie: {tx}",view_tx:"Transactie bekijken",s_deposit:"Storting wordt verzameld",s_voting:"Stemming bezig",s_passed:"Aangenomen",s_rejected:"Afgewezen",s_failed:"Mislukt",clock_deposit:"Stortingsvenster eindigt {when}",clock_voting:"Stemming eindigt {when}",clock_done:"Afgerond",bar_help:"{have} van {need} LUNC nodig om tot stemming te komen",adddep_ok:"Storting toegevoegd. Transactie: {tx}",track_notfound:"Voorstel niet gevonden op de keten. Controleer het nummer.",need_connect:"Verbind eerst hierboven je wallet.",gov_addr:"het governance-account (automatisch)"},
+ru:{brand_sub:"ИНСТРУМЕНТ ПРЕДЛОЖЕНИЙ",status_line:"<b>Готово к запуску.</b> Часть потока для создателей LUNC Dev Studio. Вы готовите предложение здесь — подписывает его ваш собственный кошелёк. Эта страница никогда не хранит ваши ключи.",shield:"<b>Безопасность прежде всего:</b> страница только собирает предложение. Ваш кошелёк показывает его, и вы одобряете его там. Ничего не подписывается вслепую, и ни один ключ не касается этой страницы.",connect_h:"1 · Подключите кошелёк",connect_sub:"Кошелёк Keplr (расширение браузера). Здесь появится ваш адрес — больше ничего не передаётся.",connect_btn:"🦊 Подключить кошелёк Keplr",keplr_missing:"Keplr не найден в этом браузере. Установите Keplr и обновите страницу — вы всё равно можете заполнить и проверить всё предложение без него.",connected_as:"Подключено:",form_h:"2 · Напишите предложение",type_label:"Тип предложения",type_store:"📦 Store Code (новый код контракта)",type_text:"📜 Текст (только сигнал)",title_label:"Заголовок",title_ph:"напр. Store Code: Мой Проект v1",desc_label:"Описание — простыми словами",desc_ph:"Что это за код, для кого он и почему голосующие должны сказать «да»?",meta_label:"Ссылка на обсуждение (необязательно)",meta_ph:"Ссылка на пост форума об этом предложении",wasm_label:"Файл кода контракта (.wasm)",wasm_pick:"Выбрать файл .wasm",wasm_none:"Файл ещё не выбран.",wasm_info:"Файл: {name} · Размер: {size} · SHA-256: {hash}",perm_label:"Кто может запускать (создавать экземпляр) этот код?",perm_default:"По умолчанию в сети (как у большинства предложений)",perm_any:"Любой кошелёк",perm_me:"Только мой кошелёк",perm_nobody:"Никто",dep_label:"Ваш стартовый депозит (LUNC)",dep_help:"Вживую из сети: предложению нужно суммарно {full} LUNC в течение {days} дней, чтобы дойти до голосования. Вы должны начать как минимум с {min} LUNC — позже любой может дополнить. Голосование затем длится {vdays} дней.",review_btn:"Проверить предложение →",review_h:"3 · Проверка — проверьте всё перед подписью",review_sub:"Это именно то, что будет отправлено. Если что-то выглядит неверно, вернитесь и исправьте — отправленное предложение публично и навсегда.",back_btn:"← Назад",submit_btn:"Отправить в моём кошельке",submit_note:"При отправке откроется ваш кошелёк. Вы одобряете (подписываете) там — страница не может подписать за вас. Действует обычная сетевая комиссия (LUNC), оценка — в вашем кошельке.",track_h:"4 · Отследить предложение",track_sub:"Живой статус прямо из сети.",track_label:"Номер предложения",track_btn:"Загрузить",st_title:"Заголовок",st_status:"Статус",st_deposit:"Депозит на данный момент",st_clock:"Часы",adddep_label:"Добавить депозит (LUNC) — поддержать это предложение",adddep_btn:"Добавить депозит в моём кошельке",footer:"LUNC DEV STUDIO · Предложения публичны и навсегда остаются в сети. Если предложение отклонено вето, его депозит сжигается. Суммы и сроки читаются вживую из сети.",r_type:"Тип",r_title:"Заголовок",r_desc:"Описание",r_meta:"Метаданные",r_code:"Файл кода",r_codesha:"SHA-256 кода",r_perm:"Разрешение на создание экземпляра",r_deposit:"Ваш депозит",r_proposer:"Автор предложения (вы)",r_sender:"Код сохраняет",r_chain:"Сеть",none_text:"(нет)",err_title:"Дайте предложению заголовок.",err_desc:"Напишите короткое описание простыми словами.",err_wasm:"Сначала выберите файл кода .wasm.",err_wasmmagic:"Этот файл не похож на файл .wasm.",err_depmin:"Стартовый депозит должен быть не меньше {min} LUNC (минимум сети для отправки).",err_nowallet:"Сначала подключите кошелёк Keplr — ваш кошелёк подписывает предложение.",err_lib:"Не удалось загрузить библиотеку подписи. Проверьте соединение и попробуйте снова.",submitting:"Ожидание вашего кошелька…",submitted:"Отправлено! Номер предложения: {id}. Транзакция: {tx}",view_tx:"Смотреть транзакцию",s_deposit:"Собирается депозит",s_voting:"Идёт голосование",s_passed:"Принято",s_rejected:"Отклонено",s_failed:"Не удалось",clock_deposit:"Окно депозита заканчивается {when}",clock_voting:"Голосование заканчивается {when}",clock_done:"Завершено",bar_help:"{have} из {need} LUNC нужно, чтобы дойти до голосования",adddep_ok:"Депозит добавлен. Транзакция: {tx}",track_notfound:"Предложение не найдено в сети. Проверьте номер.",need_connect:"Сначала подключите кошелёк выше.",gov_addr:"счёт управления (автоматически)"},
+uk:{brand_sub:"ІНСТРУМЕНТ ПРОПОЗИЦІЙ",status_line:"<b>Готово до запуску.</b> Частина потоку для творців LUNC Dev Studio. Ви готуєте пропозицію тут — підписує її ваш власний гаманець. Ця сторінка ніколи не зберігає ваші ключі.",shield:"<b>Безпека насамперед:</b> сторінка лише збирає пропозицію. Ваш гаманець показує її, і ви схвалюєте її там. Нічого не підписується наосліп, і жоден ключ не торкається цієї сторінки.",connect_h:"1 · Підключіть гаманець",connect_sub:"Гаманець Keplr (розширення браузера). Тут з'явиться ваша адреса — більше нічого не передається.",connect_btn:"🦊 Підключити гаманець Keplr",keplr_missing:"Keplr не знайдено в цьому браузері. Встановіть Keplr і оновіть сторінку — ви все одно можете заповнити й перевірити всю пропозицію без нього.",connected_as:"Підключено:",form_h:"2 · Напишіть пропозицію",type_label:"Тип пропозиції",type_store:"📦 Store Code (новий код контракту)",type_text:"📜 Текст (лише сигнал)",title_label:"Заголовок",title_ph:"напр. Store Code: Мій Проєкт v1",desc_label:"Опис — простими словами",desc_ph:"Що це за код, для кого він і чому виборці мають сказати «так»?",meta_label:"Посилання на обговорення (необов'язково)",meta_ph:"Посилання на допис форуму про цю пропозицію",wasm_label:"Файл коду контракту (.wasm)",wasm_pick:"Вибрати файл .wasm",wasm_none:"Файл ще не вибрано.",wasm_info:"Файл: {name} · Розмір: {size} · SHA-256: {hash}",perm_label:"Хто може запускати (створювати екземпляр) цей код?",perm_default:"За замовчуванням у мережі (як у більшості пропозицій)",perm_any:"Будь-який гаманець",perm_me:"Лише мій гаманець",perm_nobody:"Ніхто",dep_label:"Ваш стартовий депозит (LUNC)",dep_help:"Наживо з мережі: пропозиції потрібно сумарно {full} LUNC протягом {days} днів, щоб дійти до голосування. Ви маєте почати щонайменше з {min} LUNC — пізніше будь-хто може доповнити. Голосування потім триває {vdays} днів.",review_btn:"Перевірити пропозицію →",review_h:"3 · Перевірка — перевірте все перед підписом",review_sub:"Це саме те, що буде надіслано. Якщо щось виглядає неправильно, поверніться й виправте — надіслана пропозиція публічна і назавжди.",back_btn:"← Назад",submit_btn:"Надіслати в моєму гаманці",submit_note:"Під час надсилання відкриється ваш гаманець. Ви схвалюєте (підписуєте) там — сторінка не може підписати за вас. Діє звичайна мережева комісія (LUNC), оцінка — у вашому гаманці.",track_h:"4 · Відстежити пропозицію",track_sub:"Живий статус прямо з мережі.",track_label:"Номер пропозиції",track_btn:"Завантажити",st_title:"Заголовок",st_status:"Статус",st_deposit:"Депозит на даний момент",st_clock:"Годинник",adddep_label:"Додати депозит (LUNC) — підтримати цю пропозицію",adddep_btn:"Додати депозит у моєму гаманці",footer:"LUNC DEV STUDIO · Пропозиції публічні й назавжди залишаються в мережі. Якщо пропозицію відхилено вето, її депозит спалюється. Суми й строки читаються наживо з мережі.",r_type:"Тип",r_title:"Заголовок",r_desc:"Опис",r_meta:"Метадані",r_code:"Файл коду",r_codesha:"SHA-256 коду",r_perm:"Дозвіл на створення екземпляра",r_deposit:"Ваш депозит",r_proposer:"Автор пропозиції (ви)",r_sender:"Код зберігає",r_chain:"Мережа",none_text:"(немає)",err_title:"Дайте пропозиції заголовок.",err_desc:"Напишіть короткий опис простими словами.",err_wasm:"Спочатку виберіть файл коду .wasm.",err_wasmmagic:"Цей файл не схожий на файл .wasm.",err_depmin:"Стартовий депозит має бути не менше {min} LUNC (мінімум мережі для надсилання).",err_nowallet:"Спочатку підключіть гаманець Keplr — ваш гаманець підписує пропозицію.",err_lib:"Не вдалося завантажити бібліотеку підпису. Перевірте з'єднання й спробуйте знову.",submitting:"Очікування вашого гаманця…",submitted:"Надіслано! Номер пропозиції: {id}. Транзакція: {tx}",view_tx:"Дивитися транзакцію",s_deposit:"Збирається депозит",s_voting:"Триває голосування",s_passed:"Прийнято",s_rejected:"Відхилено",s_failed:"Не вдалося",clock_deposit:"Вікно депозиту закінчується {when}",clock_voting:"Голосування закінчується {when}",clock_done:"Завершено",bar_help:"{have} із {need} LUNC потрібно, щоб дійти до голосування",adddep_ok:"Депозит додано. Транзакція: {tx}",track_notfound:"Пропозицію не знайдено в мережі. Перевірте номер.",need_connect:"Спочатку підключіть гаманець вище.",gov_addr:"рахунок управління (автоматично)"},
+tr:{brand_sub:"TEKLİF ARACI",status_line:"<b>Lansmana hazır.</b> LUNC Dev Studio yaratıcı akışının bir parçası. Teklifi burada hazırlarsınız — kendi cüzdanınız imzalar. Bu sayfa anahtarlarınızı asla tutmaz.",shield:"<b>Önce güvenlik:</b> sayfa yalnızca teklifi oluşturur. Cüzdanınız gösterir ve siz orada onaylarsınız. Hiçbir şey körü körüne imzalanmaz ve hiçbir anahtar bu sayfaya değmez.",connect_h:"1 · Cüzdanınızı bağlayın",connect_sub:"Keplr cüzdanı (tarayıcı uzantısı). Adresiniz burada görünür — başka hiçbir şey paylaşılmaz.",connect_btn:"🦊 Keplr cüzdanını bağla",keplr_missing:"Bu tarayıcıda Keplr bulunamadı. Keplr'i kurup sayfayı yenileyin — yine de tüm teklifi onsuz doldurup inceleyebilirsiniz.",connected_as:"Bağlandı:",form_h:"2 · Teklifi yazın",type_label:"Teklif türü",type_store:"📦 Store Code (yeni sözleşme kodu)",type_text:"📜 Metin (yalnızca sinyal)",title_label:"Başlık",title_ph:"örn. Store Code: Projem v1",desc_label:"Açıklama — sade sözlerle",desc_ph:"Bu kod nedir, kimin içindir ve seçmenler neden evet demeli?",meta_label:"Tartışma bağlantısı (isteğe bağlı)",meta_ph:"Bu teklif hakkındaki forum gönderisinin bağlantısı",wasm_label:"Sözleşme kodu dosyası (.wasm)",wasm_pick:".wasm dosyası seç",wasm_none:"Henüz dosya seçilmedi.",wasm_info:"Dosya: {name} · Boyut: {size} · SHA-256: {hash}",perm_label:"Bu kodu kim başlatabilir (örnekleyebilir)?",perm_default:"Zincir varsayılanı (çoğu teklif gibi)",perm_any:"Herhangi bir cüzdan",perm_me:"Yalnızca benim cüzdanım",perm_nobody:"Hiç kimse",dep_label:"Başlangıç depozitonuz (LUNC)",dep_help:"Zincirden canlı: bir teklifin oylamaya ulaşması için {days} gün içinde toplam {full} LUNC gerekir. En az {min} LUNC ile başlamalısınız — herkes daha sonra tamamlayabilir. Oylama sonra {vdays} gün sürer.",review_btn:"Teklifi incele →",review_h:"3 · İncele — imzalamadan önce her şeyi kontrol et",review_sub:"Gönderilecek olan tam olarak budur. Bir şey yanlış görünüyorsa geri dönüp düzeltin — gönderilen teklif herkese açık ve kalıcıdır.",back_btn:"← Geri",submit_btn:"Cüzdanımda gönder",submit_note:"Göndermek cüzdanınızı açar. Orada onaylarsınız (imzalarsınız) — sayfa sizin yerinize imzalayamaz. Normal ağ ücreti (LUNC) geçerlidir, cüzdanınızda tahmin edilir.",track_h:"4 · Bir teklifi takip et",track_sub:"Zincirden canlı durum.",track_label:"Teklif numarası",track_btn:"Yükle",st_title:"Başlık",st_status:"Durum",st_deposit:"Şu ana kadarki depozito",st_clock:"Saat",adddep_label:"Depozito ekle (LUNC) — bu teklifi destekle",adddep_btn:"Cüzdanımda depozito ekle",footer:"LUNC DEV STUDIO · Teklifler zincir üzerinde herkese açık ve kalıcıdır. Bir teklif veto edilirse depozitosu yakılır. Tutarlar ve süreler zincirden canlı okunur.",r_type:"Tür",r_title:"Başlık",r_desc:"Açıklama",r_meta:"Meta veri",r_code:"Kod dosyası",r_codesha:"Kod SHA-256",r_perm:"Örnekleme izni",r_deposit:"Depozitonuz",r_proposer:"Teklif sahibi (siz)",r_sender:"Kodu saklayan",r_chain:"Zincir",none_text:"(yok)",err_title:"Teklife bir başlık verin.",err_desc:"Sade sözlerle kısa bir açıklama yazın.",err_wasm:"Önce .wasm kod dosyasını seçin.",err_wasmmagic:"Bu dosya bir .wasm dosyasına benzemiyor.",err_depmin:"Başlangıç depozitosu en az {min} LUNC olmalı (göndermek için zincir minimumu).",err_nowallet:"Önce Keplr cüzdanınızı bağlayın — teklifi cüzdanınız imzalar.",err_lib:"İmzalama kütüphanesi yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin.",submitting:"Cüzdanınız bekleniyor…",submitted:"Gönderildi! Teklif numarası: {id}. İşlem: {tx}",view_tx:"İşlemi görüntüle",s_deposit:"Depozito toplanıyor",s_voting:"Oylama sürüyor",s_passed:"Kabul edildi",s_rejected:"Reddedildi",s_failed:"Başarısız",clock_deposit:"Depozito penceresi {when} bitiyor",clock_voting:"Oylama {when} bitiyor",clock_done:"Bitti",bar_help:"Oylamaya ulaşmak için {need} LUNC içinden {have}",adddep_ok:"Depozito eklendi. İşlem: {tx}",track_notfound:"Teklif zincirde bulunamadı. Numarayı kontrol edin.",need_connect:"Önce yukarıdan cüzdanınızı bağlayın.",gov_addr:"yönetişim hesabı (otomatik)"},
+ar:{brand_sub:"أداة المقترحات",status_line:"<b>جاهزة للإطلاق.</b> جزء من مسار صنّاع LUNC Dev Studio. تُعدّ المقترح هنا — ومحفظتك الخاصة توقّعه. هذه الصفحة لا تحتفظ بمفاتيحك أبدًا.",shield:"<b>الأمان أولًا:</b> الصفحة تبني المقترح فقط. محفظتك تعرضه وأنت توافق عليه هناك. لا يُوقَّع شيء دون رؤية، ولا يلمس أي مفتاح هذه الصفحة.",connect_h:"١ · صِل محفظتك",connect_sub:"محفظة Keplr (إضافة المتصفح). يظهر عنوانك هنا — ولا يُشارك أي شيء آخر.",connect_btn:"🦊 توصيل محفظة Keplr",keplr_missing:"لم يتم العثور على Keplr في هذا المتصفح. ثبّت Keplr ثم أعد التحميل — ما زال بإمكانك ملء المقترح كاملًا ومراجعته بدونه.",connected_as:"متصل:",form_h:"٢ · اكتب المقترح",type_label:"نوع المقترح",type_store:"📦 Store Code (كود عقد جديد)",type_text:"📜 نص (إشارة فقط)",title_label:"العنوان",title_ph:"مثال: Store Code: مشروعي v1",desc_label:"الوصف — بكلمات بسيطة",desc_ph:"ما هذا الكود، ولمن هو، ولماذا يجب أن يصوّت الناخبون بنعم؟",meta_label:"رابط النقاش (اختياري)",meta_ph:"رابط منشور المنتدى حول هذا المقترح",wasm_label:"ملف كود العقد (.wasm)",wasm_pick:"اختر ملف .wasm",wasm_none:"لم يتم اختيار ملف بعد.",wasm_info:"الملف: {name} · الحجم: {size} · SHA-256: {hash}",perm_label:"من يمكنه تشغيل (إنشاء نسخة من) هذا الكود؟",perm_default:"افتراضي السلسلة (مثل معظم المقترحات)",perm_any:"أي محفظة",perm_me:"محفظتي فقط",perm_nobody:"لا أحد",dep_label:"وديعتك الابتدائية (LUNC)",dep_help:"مباشرة من السلسلة: يحتاج المقترح إلى {full} LUNC إجمالًا خلال {days} يومًا ليصل إلى التصويت. يجب أن تبدأ بما لا يقل عن {min} LUNC — ويمكن لأي شخص الإكمال لاحقًا. ثم يستمر التصويت {vdays} يومًا.",review_btn:"مراجعة المقترح ←",review_h:"٣ · راجع — تحقق من كل شيء قبل التوقيع",review_sub:"هذا بالضبط ما سيتم إرساله. إذا بدا أي شيء خاطئًا، ارجع وأصلحه — المقترح المرسل علني ودائم.",back_btn:"رجوع →",submit_btn:"الإرسال في محفظتي",submit_note:"الإرسال يفتح محفظتك. أنت توافق (توقّع) هناك — لا تستطيع الصفحة التوقيع عنك. تُطبق رسوم شبكة عادية (LUNC)، تُقدَّر في محفظتك.",track_h:"٤ · تتبّع مقترحًا",track_sub:"الحالة مباشرة من السلسلة.",track_label:"رقم المقترح",track_btn:"تحميل",st_title:"العنوان",st_status:"الحالة",st_deposit:"الوديعة حتى الآن",st_clock:"الساعة",adddep_label:"أضف وديعة (LUNC) — ادعم هذا المقترح",adddep_btn:"إضافة الوديعة في محفظتي",footer:"LUNC DEV STUDIO · المقترحات علنية ودائمة على السلسلة. إذا تم نقض مقترح، تُحرق وديعته. تُقرأ المبالغ والأوقات مباشرة من السلسلة.",r_type:"النوع",r_title:"العنوان",r_desc:"الوصف",r_meta:"البيانات الوصفية",r_code:"ملف الكود",r_codesha:"SHA-256 للكود",r_perm:"إذن إنشاء النسخ",r_deposit:"وديعتك",r_proposer:"المقترح (أنت)",r_sender:"الكود يُخزَّن بواسطة",r_chain:"السلسلة",none_text:"(لا شيء)",err_title:"امنح المقترح عنوانًا.",err_desc:"اكتب وصفًا قصيرًا بكلمات بسيطة.",err_wasm:"اختر أولًا ملف الكود .wasm.",err_wasmmagic:"لا يبدو هذا الملف ملف .wasm.",err_depmin:"يجب أن تكون الوديعة الابتدائية على الأقل {min} LUNC (حد السلسلة الأدنى للإرسال).",err_nowallet:"صِل محفظة Keplr أولًا — محفظتك توقّع المقترح.",err_lib:"تعذّر تحميل مكتبة التوقيع. تحقق من اتصالك وحاول مجددًا.",submitting:"في انتظار محفظتك…",submitted:"تم الإرسال! رقم المقترح: {id}. المعاملة: {tx}",view_tx:"عرض المعاملة",s_deposit:"جمع الوديعة",s_voting:"التصويت جارٍ",s_passed:"ناجح",s_rejected:"مرفوض",s_failed:"فاشل",clock_deposit:"تنتهي نافذة الوديعة {when}",clock_voting:"ينتهي التصويت {when}",clock_done:"انتهى",bar_help:"{have} من {need} LUNC مطلوبة للوصول إلى التصويت",adddep_ok:"أُضيفت الوديعة. المعاملة: {tx}",track_notfound:"المقترح غير موجود على السلسلة. تحقق من الرقم.",need_connect:"صِل محفظتك أعلاه أولًا.",gov_addr:"حساب الحوكمة (تلقائي)"},
+hi:{brand_sub:"प्रस्ताव उपकरण",status_line:"<b>लॉन्च के लिए तैयार।</b> LUNC Dev Studio निर्माता प्रवाह का हिस्सा। आप प्रस्ताव यहाँ तैयार करते हैं — आपका अपना वॉलेट उसे हस्ताक्षरित करता है। यह पेज आपकी कुंजियाँ कभी नहीं रखता।",shield:"<b>सुरक्षा पहले:</b> पेज केवल प्रस्ताव बनाता है। आपका वॉलेट उसे दिखाता है और आप वहाँ स्वीकृति देते हैं। कुछ भी बिना देखे हस्ताक्षरित नहीं होता, और कोई कुंजी इस पेज को नहीं छूती।",connect_h:"1 · अपना वॉलेट जोड़ें",connect_sub:"Keplr वॉलेट (ब्राउज़र एक्सटेंशन)। आपका पता यहाँ दिखता है — और कुछ साझा नहीं होता।",connect_btn:"🦊 Keplr वॉलेट जोड़ें",keplr_missing:"इस ब्राउज़र में Keplr नहीं मिला। Keplr इंस्टॉल करें और फिर से लोड करें — आप बिना इसके भी पूरा प्रस्ताव भरकर समीक्षा कर सकते हैं।",connected_as:"जुड़ा हुआ:",form_h:"2 · प्रस्ताव लिखें",type_label:"प्रस्ताव का प्रकार",type_store:"📦 Store Code (नया अनुबंध कोड)",type_text:"📜 Text (केवल संकेत)",title_label:"शीर्षक",title_ph:"जैसे Store Code: मेरा प्रोजेक्ट v1",desc_label:"विवरण — सरल शब्दों में",desc_ph:"यह कोड क्या है, किसके लिए है, और मतदाताओं को हाँ क्यों कहना चाहिए?",meta_label:"चर्चा लिंक (वैकल्पिक)",meta_ph:"इस प्रस्ताव पर फ़ोरम पोस्ट का लिंक",wasm_label:"अनुबंध कोड फ़ाइल (.wasm)",wasm_pick:".wasm फ़ाइल चुनें",wasm_none:"अभी कोई फ़ाइल नहीं चुनी गई।",wasm_info:"फ़ाइल: {name} · आकार: {size} · SHA-256: {hash}",perm_label:"इस कोड को कौन शुरू (instantiate) कर सकता है?",perm_default:"श्रृंखला डिफ़ॉल्ट (अधिकांश प्रस्तावों जैसा)",perm_any:"कोई भी वॉलेट",perm_me:"केवल मेरा वॉलेट",perm_nobody:"कोई नहीं",dep_label:"आपकी शुरुआती जमा (LUNC)",dep_help:"श्रृंखला से लाइव: प्रस्ताव को मतदान तक पहुँचने के लिए {days} दिनों में कुल {full} LUNC चाहिए। आपको कम से कम {min} LUNC से शुरू करना होगा — बाद में कोई भी बढ़ा सकता है। फिर मतदान {vdays} दिन चलता है।",review_btn:"प्रस्ताव की समीक्षा करें →",review_h:"3 · समीक्षा — हस्ताक्षर से पहले सब कुछ जाँचें",review_sub:"ठीक यही जमा होगा। कुछ गलत लगे तो वापस जाकर ठीक करें — जमा किया गया प्रस्ताव सार्वजनिक और स्थायी होता है।",back_btn:"← वापस",submit_btn:"मेरे वॉलेट में जमा करें",submit_note:"जमा करने से आपका वॉलेट खुलता है। आप वहाँ स्वीकृति देते हैं (हस्ताक्षर करते हैं) — पेज आपके लिए हस्ताक्षर नहीं कर सकता। सामान्य नेटवर्क शुल्क (LUNC) लगता है, जिसका अनुमान आपके वॉलेट में मिलेगा।",track_h:"4 · प्रस्ताव ट्रैक करें",track_sub:"श्रृंखला से सीधे लाइव स्थिति।",track_label:"प्रस्ताव संख्या",track_btn:"लोड करें",st_title:"शीर्षक",st_status:"स्थिति",st_deposit:"अब तक की जमा",st_clock:"घड़ी",adddep_label:"जमा जोड़ें (LUNC) — इस प्रस्ताव का समर्थन करें",adddep_btn:"मेरे वॉलेट में जमा जोड़ें",footer:"LUNC DEV STUDIO · प्रस्ताव श्रृंखला पर सार्वजनिक और स्थायी होते हैं। यदि कोई प्रस्ताव वीटो होता है, तो उसकी जमा जला दी जाती है। राशियाँ और समय श्रृंखला से लाइव पढ़े जाते हैं।",r_type:"प्रकार",r_title:"शीर्षक",r_desc:"विवरण",r_meta:"मेटाडेटा",r_code:"कोड फ़ाइल",r_codesha:"कोड SHA-256",r_perm:"Instantiate अनुमति",r_deposit:"आपकी जमा",r_proposer:"प्रस्तावक (आप)",r_sender:"कोड संग्रहीत करता है",r_chain:"श्रृंखला",none_text:"(कोई नहीं)",err_title:"प्रस्ताव को एक शीर्षक दें।",err_desc:"सरल शब्दों में छोटा विवरण लिखें।",err_wasm:"पहले .wasm कोड फ़ाइल चुनें।",err_wasmmagic:"यह फ़ाइल .wasm फ़ाइल जैसी नहीं लगती।",err_depmin:"शुरुआती जमा कम से कम {min} LUNC होनी चाहिए (जमा करने के लिए श्रृंखला न्यूनतम)।",err_nowallet:"पहले अपना Keplr वॉलेट जोड़ें — आपका वॉलेट प्रस्ताव पर हस्ताक्षर करता है।",err_lib:"हस्ताक्षर लाइब्रेरी लोड नहीं हो सकी। अपना कनेक्शन जाँचें और फिर से कोशिश करें।",submitting:"आपके वॉलेट की प्रतीक्षा…",submitted:"जमा हो गया! प्रस्ताव संख्या: {id}। लेन-देन: {tx}",view_tx:"लेन-देन देखें",s_deposit:"जमा एकत्र हो रही है",s_voting:"मतदान चल रहा है",s_passed:"पारित",s_rejected:"अस्वीकृत",s_failed:"विफल",clock_deposit:"जमा विंडो समाप्त {when}",clock_voting:"मतदान समाप्त {when}",clock_done:"समाप्त",bar_help:"मतदान तक पहुँचने के लिए {need} LUNC में से {have}",adddep_ok:"जमा जोड़ी गई। लेन-देन: {tx}",track_notfound:"श्रृंखला पर प्रस्ताव नहीं मिला। संख्या जाँचें।",need_connect:"पहले ऊपर अपना वॉलेट जोड़ें।",gov_addr:"शासन खाता (स्वचालित)"},
+id:{brand_sub:"ALAT PROPOSAL",status_line:"<b>Siap diluncurkan.</b> Bagian dari alur kreator LUNC Dev Studio. Anda menyiapkan proposal di sini — dompet Anda sendiri yang menandatanganinya. Halaman ini tidak pernah menyimpan kunci Anda.",shield:"<b>Keamanan utama:</b> halaman ini hanya menyusun proposal. Dompet Anda menampilkannya dan Anda menyetujuinya di sana. Tidak ada yang ditandatangani tanpa melihat, dan tidak ada kunci yang menyentuh halaman ini.",connect_h:"1 · Hubungkan dompet Anda",connect_sub:"Dompet Keplr (ekstensi browser). Alamat Anda muncul di sini — tidak ada lagi yang dibagikan.",connect_btn:"🦊 Hubungkan dompet Keplr",keplr_missing:"Keplr tidak ditemukan di browser ini. Pasang Keplr lalu muat ulang — Anda tetap bisa mengisi dan meninjau seluruh proposal tanpanya.",connected_as:"Terhubung:",form_h:"2 · Tulis proposal",type_label:"Jenis proposal",type_store:"📦 Store Code (kode kontrak baru)",type_text:"📜 Teks (hanya sinyal)",title_label:"Judul",title_ph:"mis. Store Code: Proyek Saya v1",desc_label:"Deskripsi — dengan kata sederhana",desc_ph:"Kode ini apa, untuk siapa, dan mengapa pemilih harus berkata ya?",meta_label:"Tautan diskusi (opsional)",meta_ph:"Tautan ke pos forum tentang proposal ini",wasm_label:"Berkas kode kontrak (.wasm)",wasm_pick:"Pilih berkas .wasm",wasm_none:"Belum ada berkas dipilih.",wasm_info:"Berkas: {name} · Ukuran: {size} · SHA-256: {hash}",perm_label:"Siapa yang boleh memulai (instantiate) kode ini?",perm_default:"Bawaan rantai (seperti kebanyakan proposal)",perm_any:"Dompet mana pun",perm_me:"Hanya dompet saya",perm_nobody:"Tidak seorang pun",dep_label:"Deposit awal Anda (LUNC)",dep_help:"Langsung dari rantai: sebuah proposal butuh total {full} LUNC dalam {days} hari untuk mencapai pemungutan suara. Anda harus memulai dengan setidaknya {min} LUNC — siapa pun bisa menambahkannya nanti. Pemungutan suara lalu berjalan {vdays} hari.",review_btn:"Tinjau proposal →",review_h:"3 · Tinjau — periksa semuanya sebelum menandatangani",review_sub:"Inilah tepatnya yang akan dikirim. Jika ada yang tampak salah, kembali dan perbaiki — proposal yang terkirim bersifat publik dan permanen.",back_btn:"← Kembali",submit_btn:"Kirim di dompet saya",submit_note:"Mengirim akan membuka dompet Anda. Anda menyetujui (menandatangani) di sana — halaman ini tidak bisa menandatangani untuk Anda. Biaya jaringan normal (LUNC) berlaku, diperkirakan di dompet Anda.",track_h:"4 · Lacak proposal",track_sub:"Status langsung dari rantai.",track_label:"Nomor proposal",track_btn:"Muat",st_title:"Judul",st_status:"Status",st_deposit:"Deposit sejauh ini",st_clock:"Jam",adddep_label:"Tambah deposit (LUNC) — dukung proposal ini",adddep_btn:"Tambah deposit di dompet saya",footer:"LUNC DEV STUDIO · Proposal bersifat publik dan permanen di rantai. Jika sebuah proposal diveto, depositnya dibakar. Jumlah dan waktu dibaca langsung dari rantai.",r_type:"Jenis",r_title:"Judul",r_desc:"Deskripsi",r_meta:"Metadata",r_code:"Berkas kode",r_codesha:"SHA-256 kode",r_perm:"Izin instantiate",r_deposit:"Deposit Anda",r_proposer:"Pengusul (Anda)",r_sender:"Kode disimpan oleh",r_chain:"Rantai",none_text:"(tidak ada)",err_title:"Beri judul pada proposal.",err_desc:"Tulis deskripsi singkat dengan kata sederhana.",err_wasm:"Pilih dulu berkas kode .wasm.",err_wasmmagic:"Berkas itu tidak tampak seperti berkas .wasm.",err_depmin:"Deposit awal harus setidaknya {min} LUNC (minimum rantai untuk mengirim).",err_nowallet:"Hubungkan dompet Keplr Anda dulu — dompet Anda yang menandatangani proposal.",err_lib:"Tidak dapat memuat pustaka penandatanganan. Periksa koneksi Anda dan coba lagi.",submitting:"Menunggu dompet Anda…",submitted:"Terkirim! Nomor proposal: {id}. Transaksi: {tx}",view_tx:"Lihat transaksi",s_deposit:"Mengumpulkan deposit",s_voting:"Pemungutan suara berlangsung",s_passed:"Lulus",s_rejected:"Ditolak",s_failed:"Gagal",clock_deposit:"Jendela deposit berakhir {when}",clock_voting:"Pemungutan suara berakhir {when}",clock_done:"Selesai",bar_help:"{have} dari {need} LUNC yang dibutuhkan untuk mencapai pemungutan suara",adddep_ok:"Deposit ditambahkan. Transaksi: {tx}",track_notfound:"Proposal tidak ditemukan di rantai. Periksa nomornya.",need_connect:"Hubungkan dompet Anda di atas terlebih dahulu.",gov_addr:"akun tata kelola (otomatis)"},
+vi:{brand_sub:"CÔNG CỤ ĐỀ XUẤT",status_line:"<b>Sẵn sàng ra mắt.</b> Một phần trong quy trình dành cho nhà sáng tạo của LUNC Dev Studio. Bạn chuẩn bị đề xuất tại đây — ví của chính bạn ký nó. Trang này không bao giờ giữ khóa của bạn.",shield:"<b>An toàn là trên hết:</b> trang chỉ xây dựng đề xuất. Ví của bạn hiển thị nó và bạn phê duyệt tại đó. Không có gì được ký mù, và không khóa nào chạm vào trang này.",connect_h:"1 · Kết nối ví của bạn",connect_sub:"Ví Keplr (tiện ích mở rộng trình duyệt). Địa chỉ của bạn xuất hiện tại đây — không có gì khác được chia sẻ.",connect_btn:"🦊 Kết nối ví Keplr",keplr_missing:"Không tìm thấy Keplr trong trình duyệt này. Hãy cài Keplr rồi tải lại — bạn vẫn có thể điền và xem lại toàn bộ đề xuất mà không cần nó.",connected_as:"Đã kết nối:",form_h:"2 · Viết đề xuất",type_label:"Loại đề xuất",type_store:"📦 Store Code (mã hợp đồng mới)",type_text:"📜 Văn bản (chỉ tín hiệu)",title_label:"Tiêu đề",title_ph:"vd. Store Code: Dự Án Của Tôi v1",desc_label:"Mô tả — bằng lời dễ hiểu",desc_ph:"Mã này là gì, dành cho ai, và vì sao cử tri nên bỏ phiếu đồng ý?",meta_label:"Liên kết thảo luận (tùy chọn)",meta_ph:"Liên kết đến bài đăng diễn đàn về đề xuất này",wasm_label:"Tệp mã hợp đồng (.wasm)",wasm_pick:"Chọn tệp .wasm",wasm_none:"Chưa chọn tệp nào.",wasm_info:"Tệp: {name} · Kích thước: {size} · SHA-256: {hash}",perm_label:"Ai có thể khởi chạy (instantiate) mã này?",perm_default:"Mặc định của chuỗi (như hầu hết đề xuất)",perm_any:"Bất kỳ ví nào",perm_me:"Chỉ ví của tôi",perm_nobody:"Không ai",dep_label:"Khoản ký quỹ khởi đầu của bạn (LUNC)",dep_help:"Trực tiếp từ chuỗi: một đề xuất cần tổng cộng {full} LUNC trong vòng {days} ngày để đến được vòng bỏ phiếu. Bạn phải bắt đầu với ít nhất {min} LUNC — bất kỳ ai cũng có thể bổ sung sau. Việc bỏ phiếu sau đó diễn ra trong {vdays} ngày.",review_btn:"Xem lại đề xuất →",review_h:"3 · Xem lại — kiểm tra mọi thứ trước khi ký",review_sub:"Đây chính xác là những gì sẽ được gửi. Nếu có gì đó không đúng, hãy quay lại sửa — đề xuất đã gửi là công khai và vĩnh viễn.",back_btn:"← Quay lại",submit_btn:"Gửi trong ví của tôi",submit_note:"Gửi sẽ mở ví của bạn. Bạn phê duyệt (ký) tại đó — trang không thể ký thay bạn. Áp dụng phí mạng thông thường (LUNC), được ước tính trong ví của bạn.",track_h:"4 · Theo dõi một đề xuất",track_sub:"Trạng thái trực tiếp ngay từ chuỗi.",track_label:"Số đề xuất",track_btn:"Tải",st_title:"Tiêu đề",st_status:"Trạng thái",st_deposit:"Ký quỹ đến nay",st_clock:"Đồng hồ",adddep_label:"Thêm ký quỹ (LUNC) — ủng hộ đề xuất này",adddep_btn:"Thêm ký quỹ trong ví của tôi",footer:"LUNC DEV STUDIO · Các đề xuất là công khai và vĩnh viễn trên chuỗi. Nếu một đề xuất bị phủ quyết, khoản ký quỹ của nó sẽ bị đốt. Số tiền và thời gian được đọc trực tiếp từ chuỗi.",r_type:"Loại",r_title:"Tiêu đề",r_desc:"Mô tả",r_meta:"Siêu dữ liệu",r_code:"Tệp mã",r_codesha:"SHA-256 của mã",r_perm:"Quyền instantiate",r_deposit:"Ký quỹ của bạn",r_proposer:"Người đề xuất (bạn)",r_sender:"Mã được lưu bởi",r_chain:"Chuỗi",none_text:"(không có)",err_title:"Hãy đặt tiêu đề cho đề xuất.",err_desc:"Viết một mô tả ngắn bằng lời dễ hiểu.",err_wasm:"Hãy chọn tệp mã .wasm trước.",err_wasmmagic:"Tệp đó trông không giống tệp .wasm.",err_depmin:"Ký quỹ khởi đầu phải ít nhất {min} LUNC (mức tối thiểu của chuỗi để gửi).",err_nowallet:"Hãy kết nối ví Keplr trước — ví của bạn ký đề xuất.",err_lib:"Không tải được thư viện ký. Kiểm tra kết nối và thử lại.",submitting:"Đang chờ ví của bạn…",submitted:"Đã gửi! Số đề xuất: {id}. Giao dịch: {tx}",view_tx:"Xem giao dịch",s_deposit:"Đang thu ký quỹ",s_voting:"Đang bỏ phiếu",s_passed:"Đã thông qua",s_rejected:"Bị từ chối",s_failed:"Thất bại",clock_deposit:"Cửa sổ ký quỹ kết thúc {when}",clock_voting:"Bỏ phiếu kết thúc {when}",clock_done:"Đã kết thúc",bar_help:"{have} trong {need} LUNC cần để đến vòng bỏ phiếu",adddep_ok:"Đã thêm ký quỹ. Giao dịch: {tx}",track_notfound:"Không tìm thấy đề xuất trên chuỗi. Kiểm tra lại số.",need_connect:"Hãy kết nối ví của bạn ở trên trước.",gov_addr:"tài khoản quản trị (tự động)"},
+th:{brand_sub:"เครื่องมือเสนอข้อเสนอ",status_line:"<b>พร้อมเปิดตัว</b> ส่วนหนึ่งของขั้นตอนผู้สร้าง LUNC Dev Studio คุณเตรียมข้อเสนอที่นี่ — กระเป๋าเงินของคุณเองเป็นผู้ลงนาม หน้านี้ไม่เคยเก็บกุญแจของคุณ",shield:"<b>ความปลอดภัยมาก่อน:</b> หน้านี้เพียงสร้างข้อเสนอ กระเป๋าเงินของคุณจะแสดงมันและคุณอนุมัติที่นั่น ไม่มีอะไรถูกลงนามโดยไม่เห็น และไม่มีกุญแจใดแตะหน้านี้",connect_h:"1 · เชื่อมต่อกระเป๋าเงินของคุณ",connect_sub:"กระเป๋าเงิน Keplr (ส่วนขยายเบราว์เซอร์) ที่อยู่ของคุณจะปรากฏที่นี่ — ไม่มีการแชร์อย่างอื่น",connect_btn:"🦊 เชื่อมต่อกระเป๋าเงิน Keplr",keplr_missing:"ไม่พบ Keplr ในเบราว์เซอร์นี้ ติดตั้ง Keplr แล้วโหลดใหม่ — คุณยังกรอกและตรวจสอบข้อเสนอทั้งหมดได้โดยไม่ต้องใช้มัน",connected_as:"เชื่อมต่อแล้ว:",form_h:"2 · เขียนข้อเสนอ",type_label:"ประเภทข้อเสนอ",type_store:"📦 Store Code (โค้ดสัญญาใหม่)",type_text:"📜 ข้อความ (ส่งสัญญาณเท่านั้น)",title_label:"ชื่อเรื่อง",title_ph:"เช่น Store Code: โครงการของฉัน v1",desc_label:"คำอธิบาย — ด้วยคำง่าย ๆ",desc_ph:"โค้ดนี้คืออะไร สำหรับใคร และทำไมผู้โหวตควรตอบตกลง?",meta_label:"ลิงก์การสนทนา (ไม่บังคับ)",meta_ph:"ลิงก์ไปยังโพสต์ฟอรัมเกี่ยวกับข้อเสนอนี้",wasm_label:"ไฟล์โค้ดสัญญา (.wasm)",wasm_pick:"เลือกไฟล์ .wasm",wasm_none:"ยังไม่ได้เลือกไฟล์",wasm_info:"ไฟล์: {name} · ขนาด: {size} · SHA-256: {hash}",perm_label:"ใครสามารถเริ่มใช้งาน (instantiate) โค้ดนี้ได้?",perm_default:"ค่าเริ่มต้นของเชน (เหมือนข้อเสนอส่วนใหญ่)",perm_any:"กระเป๋าเงินใดก็ได้",perm_me:"เฉพาะกระเป๋าเงินของฉัน",perm_nobody:"ไม่มีใคร",dep_label:"เงินฝากเริ่มต้นของคุณ (LUNC)",dep_help:"สดจากเชน: ข้อเสนอต้องการรวม {full} LUNC ภายใน {days} วันจึงจะถึงการโหวต คุณต้องเริ่มอย่างน้อย {min} LUNC — ใครก็เติมทีหลังได้ จากนั้นการโหวตจะใช้เวลา {vdays} วัน",review_btn:"ตรวจสอบข้อเสนอ →",review_h:"3 · ตรวจสอบ — เช็กทุกอย่างก่อนลงนาม",review_sub:"นี่คือสิ่งที่จะถูกส่งอย่างแท้จริง หากมีอะไรดูไม่ถูกต้อง ให้ย้อนกลับไปแก้ไข — ข้อเสนอที่ส่งแล้วเป็นสาธารณะและถาวร",back_btn:"← กลับ",submit_btn:"ส่งในกระเป๋าเงินของฉัน",submit_note:"การส่งจะเปิดกระเป๋าเงินของคุณ คุณอนุมัติ (ลงนาม) ที่นั่น — หน้านี้ลงนามแทนคุณไม่ได้ มีค่าธรรมเนียมเครือข่ายปกติ (LUNC) ซึ่งจะประมาณในกระเป๋าเงินของคุณ",track_h:"4 · ติดตามข้อเสนอ",track_sub:"สถานะสดตรงจากเชน",track_label:"หมายเลขข้อเสนอ",track_btn:"โหลด",st_title:"ชื่อเรื่อง",st_status:"สถานะ",st_deposit:"เงินฝากจนถึงตอนนี้",st_clock:"นาฬิกา",adddep_label:"เพิ่มเงินฝาก (LUNC) — สนับสนุนข้อเสนอนี้",adddep_btn:"เพิ่มเงินฝากในกระเป๋าเงินของฉัน",footer:"LUNC DEV STUDIO · ข้อเสนอเป็นสาธารณะและถาวรบนเชน หากข้อเสนอถูกวีโต้ เงินฝากจะถูกเผา จำนวนเงินและเวลาอ่านสดจากเชน",r_type:"ประเภท",r_title:"ชื่อเรื่อง",r_desc:"คำอธิบาย",r_meta:"เมทาดาทา",r_code:"ไฟล์โค้ด",r_codesha:"SHA-256 ของโค้ด",r_perm:"สิทธิ์ instantiate",r_deposit:"เงินฝากของคุณ",r_proposer:"ผู้เสนอ (คุณ)",r_sender:"โค้ดถูกจัดเก็บโดย",r_chain:"เชน",none_text:"(ไม่มี)",err_title:"ตั้งชื่อเรื่องให้ข้อเสนอ",err_desc:"เขียนคำอธิบายสั้น ๆ ด้วยคำง่าย ๆ",err_wasm:"เลือกไฟล์โค้ด .wasm ก่อน",err_wasmmagic:"ไฟล์นั้นดูไม่เหมือนไฟล์ .wasm",err_depmin:"เงินฝากเริ่มต้นต้องอย่างน้อย {min} LUNC (ขั้นต่ำของเชนในการส่ง)",err_nowallet:"เชื่อมต่อกระเป๋าเงิน Keplr ก่อน — กระเป๋าเงินของคุณลงนามข้อเสนอ",err_lib:"โหลดไลบรารีการลงนามไม่ได้ ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",submitting:"กำลังรอกระเป๋าเงินของคุณ…",submitted:"ส่งแล้ว! หมายเลขข้อเสนอ: {id} ธุรกรรม: {tx}",view_tx:"ดูธุรกรรม",s_deposit:"กำลังเก็บเงินฝาก",s_voting:"กำลังโหวต",s_passed:"ผ่าน",s_rejected:"ถูกปฏิเสธ",s_failed:"ล้มเหลว",clock_deposit:"หน้าต่างฝากเงินสิ้นสุด {when}",clock_voting:"การโหวตสิ้นสุด {when}",clock_done:"เสร็จสิ้น",bar_help:"{have} จาก {need} LUNC ที่ต้องการเพื่อไปถึงการโหวต",adddep_ok:"เพิ่มเงินฝากแล้ว ธุรกรรม: {tx}",track_notfound:"ไม่พบข้อเสนอบนเชน ตรวจสอบหมายเลข",need_connect:"เชื่อมต่อกระเป๋าเงินของคุณด้านบนก่อน",gov_addr:"บัญชีการกำกับดูแล (อัตโนมัติ)"},
+ko:{brand_sub:"제안 도구",status_line:"<b>출시 준비 완료.</b> LUNC Dev Studio 크리에이터 흐름의 일부입니다. 제안은 여기서 준비하고, 서명은 본인의 지갑이 합니다. 이 페이지는 키를 절대 보관하지 않습니다.",shield:"<b>보안이 먼저입니다:</b> 페이지는 제안을 만들기만 합니다. 지갑이 내용을 보여주고 거기서 승인합니다. 내용을 보지 않고 서명하는 일은 없으며, 어떤 키도 이 페이지에 닿지 않습니다.",connect_h:"1 · 지갑 연결",connect_sub:"Keplr 지갑(브라우저 확장). 여기에 주소가 표시됩니다 — 그 외에는 아무것도 공유되지 않습니다.",connect_btn:"🦊 Keplr 지갑 연결",keplr_missing:"이 브라우저에서 Keplr를 찾지 못했습니다. Keplr를 설치하고 새로고침하세요 — 없어도 제안 전체를 작성하고 검토할 수 있습니다.",connected_as:"연결됨:",form_h:"2 · 제안 작성",type_label:"제안 유형",type_store:"📦 Store Code (새 컨트랙트 코드)",type_text:"📜 텍스트 (신호 전용)",title_label:"제목",title_ph:"예: Store Code: 내 프로젝트 v1",desc_label:"설명 — 쉬운 말로",desc_ph:"이 코드는 무엇이고, 누구를 위한 것이며, 왜 찬성해야 하나요?",meta_label:"토론 링크 (선택)",meta_ph:"이 제안에 대한 포럼 글 링크",wasm_label:"컨트랙트 코드 파일 (.wasm)",wasm_pick:".wasm 파일 선택",wasm_none:"아직 선택된 파일이 없습니다.",wasm_info:"파일: {name} · 크기: {size} · SHA-256: {hash}",perm_label:"이 코드를 시작(instantiate)할 수 있는 사람은?",perm_default:"체인 기본값 (대부분의 제안과 동일)",perm_any:"모든 지갑",perm_me:"내 지갑만",perm_nobody:"아무도 없음",dep_label:"시작 예치금 (LUNC)",dep_help:"체인에서 실시간으로: 제안이 투표에 도달하려면 {days}일 안에 총 {full} LUNC가 필요합니다. 최소 {min} LUNC로 시작해야 하며, 나중에 누구나 보탤 수 있습니다. 그 후 투표는 {vdays}일간 진행됩니다.",review_btn:"제안 검토 →",review_h:"3 · 검토 — 서명 전에 모든 것을 확인하세요",review_sub:"이것이 정확히 제출될 내용입니다. 잘못된 부분이 보이면 돌아가서 고치세요 — 제출된 제안은 공개되고 영구적입니다.",back_btn:"← 뒤로",submit_btn:"내 지갑에서 제출",submit_note:"제출하면 지갑이 열립니다. 거기서 승인(서명)합니다 — 페이지가 대신 서명할 수 없습니다. 일반 네트워크 수수료(LUNC)가 적용되며 지갑에서 추정됩니다.",track_h:"4 · 제안 추적",track_sub:"체인에서 직접 가져오는 실시간 상태입니다.",track_label:"제안 번호",track_btn:"불러오기",st_title:"제목",st_status:"상태",st_deposit:"지금까지의 예치금",st_clock:"시계",adddep_label:"예치금 추가 (LUNC) — 이 제안을 응원하세요",adddep_btn:"내 지갑에서 예치금 추가",footer:"LUNC DEV STUDIO · 제안은 체인에 공개되고 영구적입니다. 제안이 거부권(veto)으로 막히면 예치금은 소각됩니다. 금액과 시간은 체인에서 실시간으로 읽어옵니다.",r_type:"유형",r_title:"제목",r_desc:"설명",r_meta:"메타데이터",r_code:"코드 파일",r_codesha:"코드 SHA-256",r_perm:"Instantiate 권한",r_deposit:"내 예치금",r_proposer:"제안자 (본인)",r_sender:"코드 저장 주체",r_chain:"체인",none_text:"(없음)",err_title:"제안에 제목을 입력하세요.",err_desc:"쉬운 말로 짧은 설명을 쓰세요.",err_wasm:"먼저 .wasm 코드 파일을 선택하세요.",err_wasmmagic:"그 파일은 .wasm 파일처럼 보이지 않습니다.",err_depmin:"시작 예치금은 최소 {min} LUNC여야 합니다 (제출을 위한 체인 최소값).",err_nowallet:"먼저 Keplr 지갑을 연결하세요 — 제안에 서명하는 것은 본인의 지갑입니다.",err_lib:"서명 라이브러리를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.",submitting:"지갑을 기다리는 중…",submitted:"제출 완료! 제안 번호: {id}. 트랜잭션: {tx}",view_tx:"트랜잭션 보기",s_deposit:"예치금 수집 중",s_voting:"투표 진행 중",s_passed:"통과",s_rejected:"거부",s_failed:"실패",clock_deposit:"예치 기간 종료 {when}",clock_voting:"투표 종료 {when}",clock_done:"종료됨",bar_help:"투표 도달에 필요한 {need} LUNC 중 {have}",adddep_ok:"예치금이 추가되었습니다. 트랜잭션: {tx}",track_notfound:"체인에서 제안을 찾지 못했습니다. 번호를 확인하세요.",need_connect:"먼저 위에서 지갑을 연결하세요.",gov_addr:"거버넌스 계정 (자동)"},
+ja:{brand_sub:"提案ツール",status_line:"<b>リリース準備完了。</b>LUNC Dev Studio クリエイターフローの一部です。提案はここで準備し、署名はあなた自身のウォレットが行います。このページがあなたのキーを保持することは決してありません。",shield:"<b>セキュリティ最優先：</b>このページは提案を作成するだけです。内容はウォレットに表示され、承認はそこで行います。内容を見ずに署名することはなく、キーがこのページに触れることもありません。",connect_h:"1 · ウォレットを接続",connect_sub:"Keplr ウォレット（ブラウザ拡張）。ここにあなたのアドレスが表示されます — それ以外の情報は共有されません。",connect_btn:"🦊 Keplr ウォレットを接続",keplr_missing:"このブラウザで Keplr が見つかりませんでした。Keplr をインストールして再読み込みしてください — なくても提案全体の入力と確認はできます。",connected_as:"接続中：",form_h:"2 · 提案を書く",type_label:"提案の種類",type_store:"📦 Store Code（新しいコントラクトコード）",type_text:"📜 テキスト（シグナリングのみ）",title_label:"タイトル",title_ph:"例：Store Code: My Project v1",desc_label:"説明 — 平易な言葉で",desc_ph:"このコードは何か、誰のためか、なぜ賛成すべきかを書いてください。",meta_label:"議論リンク（任意）",meta_ph:"この提案に関するフォーラム投稿へのリンク",wasm_label:"コントラクトコードファイル (.wasm)",wasm_pick:".wasm ファイルを選ぶ",wasm_none:"まだファイルが選ばれていません。",wasm_info:"ファイル：{name} · サイズ：{size} · SHA-256：{hash}",perm_label:"このコードを起動（instantiate）できるのは誰ですか？",perm_default:"チェーン標準（多くの提案と同じ）",perm_any:"どのウォレットでも",perm_me:"自分のウォレットのみ",perm_nobody:"誰もできない",dep_label:"開始デポジット (LUNC)",dep_help:"チェーンからライブ取得：提案が投票に進むには {days} 日以内に合計 {full} LUNC が必要です。開始は最低 {min} LUNC から — 後から誰でも追加できます。その後の投票期間は {vdays} 日です。",review_btn:"提案を確認 →",review_h:"3 · 確認 — 署名前にすべてをチェック",review_sub:"これがそのまま提出されます。おかしい点があれば戻って直してください — 提出された提案は公開され、永続します。",back_btn:"← 戻る",submit_btn:"自分のウォレットで提出",submit_note:"提出するとウォレットが開きます。承認（署名）はそこで行います — ページが代わりに署名することはできません。通常のネットワーク手数料 (LUNC) がかかり、ウォレットで見積もられます。",track_h:"4 · 提案を追跡",track_sub:"チェーンから直接取得するライブステータス。",track_label:"提案番号",track_btn:"読み込む",st_title:"タイトル",st_status:"ステータス",st_deposit:"現在のデポジット",st_clock:"時計",adddep_label:"デポジットを追加 (LUNC) — この提案を応援",adddep_btn:"自分のウォレットでデポジット追加",footer:"LUNC DEV STUDIO · 提案はチェーン上で公開され、永続します。提案が拒否権（veto）で否決されるとデポジットは焼却されます。金額と時間はチェーンからライブで読み取られます。",r_type:"種類",r_title:"タイトル",r_desc:"説明",r_meta:"メタデータ",r_code:"コードファイル",r_codesha:"コード SHA-256",r_perm:"Instantiate 権限",r_deposit:"あなたのデポジット",r_proposer:"提案者（あなた）",r_sender:"コードの保存者",r_chain:"チェーン",none_text:"（なし）",err_title:"提案にタイトルを付けてください。",err_desc:"平易な言葉で短い説明を書いてください。",err_wasm:"先に .wasm コードファイルを選んでください。",err_wasmmagic:"そのファイルは .wasm ファイルではないようです。",err_depmin:"開始デポジットは最低 {min} LUNC 必要です（提出のためのチェーン最小値）。",err_nowallet:"先に Keplr ウォレットを接続してください — 提案に署名するのはあなたのウォレットです。",err_lib:"署名ライブラリを読み込めませんでした。接続を確認して再試行してください。",submitting:"ウォレットを待っています…",submitted:"提出完了！提案番号：{id}。トランザクション：{tx}",view_tx:"トランザクションを見る",s_deposit:"デポジット収集中",s_voting:"投票中",s_passed:"可決",s_rejected:"否決",s_failed:"失敗",clock_deposit:"デポジット期間の終了 {when}",clock_voting:"投票の終了 {when}",clock_done:"終了",bar_help:"投票に必要な {need} LUNC のうち {have}",adddep_ok:"デポジットを追加しました。トランザクション：{tx}",track_notfound:"チェーン上に提案が見つかりません。番号を確認してください。",need_connect:"先に上でウォレットを接続してください。",gov_addr:"ガバナンスアカウント（自動）"},
+zh:{brand_sub:"提案工具",status_line:"<b>已准备好上线。</b>这是 LUNC Dev Studio 创作者流程的一部分。您在此准备提案——由您自己的钱包签署。本页面绝不保管您的密钥。",shield:"<b>安全第一：</b>本页面只负责构建提案。您的钱包会显示它，您在钱包中批准。任何内容都不会在未查看的情况下签署，任何密钥都不会接触本页面。",connect_h:"1 · 连接您的钱包",connect_sub:"Keplr 钱包（浏览器扩展）。您的地址会显示在这里——不会共享其他任何信息。",connect_btn:"🦊 连接 Keplr 钱包",keplr_missing:"此浏览器中未找到 Keplr。请安装 Keplr 后重新加载——没有它您仍可以填写并审核整个提案。",connected_as:"已连接：",form_h:"2 · 撰写提案",type_label:"提案类型",type_store:"📦 Store Code（新合约代码）",type_text:"📜 文本（仅信号）",title_label:"标题",title_ph:"例如：Store Code: 我的项目 v1",desc_label:"说明——用通俗的话",desc_ph:"这段代码是什么、为谁而做、投票人为什么应该赞成？",meta_label:"讨论链接（可选）",meta_ph:"关于此提案的论坛帖子链接",wasm_label:"合约代码文件 (.wasm)",wasm_pick:"选择 .wasm 文件",wasm_none:"尚未选择文件。",wasm_info:"文件：{name} · 大小：{size} · SHA-256：{hash}",perm_label:"谁可以启动（实例化）此代码？",perm_default:"链上默认（与大多数提案相同）",perm_any:"任何钱包",perm_me:"仅我的钱包",perm_nobody:"无人",dep_label:"您的起始质押 (LUNC)",dep_help:"来自链上的实时数据：提案需要在 {days} 天内累计达到 {full} LUNC 才能进入投票。您必须以至少 {min} LUNC 起步——之后任何人都可以追加。之后投票进行 {vdays} 天。",review_btn:"审核提案 →",review_h:"3 · 审核——签署前检查一切",review_sub:"这正是将被提交的内容。若有任何不对，返回修改——已提交的提案是公开且永久的。",back_btn:"← 返回",submit_btn:"在我的钱包中提交",submit_note:"提交时将打开您的钱包。您在钱包中批准（签署）——本页面无法代您签署。将收取正常网络费用 (LUNC)，由您的钱包估算。",track_h:"4 · 跟踪提案",track_sub:"直接来自链上的实时状态。",track_label:"提案编号",track_btn:"加载",st_title:"标题",st_status:"状态",st_deposit:"当前质押",st_clock:"时钟",adddep_label:"追加质押 (LUNC)——支持此提案",adddep_btn:"在我的钱包中追加质押",footer:"LUNC DEV STUDIO · 提案在链上公开且永久。若提案被否决（veto），其质押将被销毁。金额和时间均从链上实时读取。",r_type:"类型",r_title:"标题",r_desc:"说明",r_meta:"元数据",r_code:"代码文件",r_codesha:"代码 SHA-256",r_perm:"实例化权限",r_deposit:"您的质押",r_proposer:"提案人（您）",r_sender:"代码由其存储",r_chain:"链",none_text:"（无）",err_title:"请为提案填写标题。",err_desc:"请用通俗的话写一段简短说明。",err_wasm:"请先选择 .wasm 代码文件。",err_wasmmagic:"该文件看起来不像 .wasm 文件。",err_depmin:"起始质押至少为 {min} LUNC（提交所需的链上最低值）。",err_nowallet:"请先连接您的 Keplr 钱包——提案由您的钱包签署。",err_lib:"无法加载签署库。请检查网络连接后重试。",submitting:"正在等待您的钱包…",submitted:"已提交！提案编号：{id}。交易：{tx}",view_tx:"查看交易",s_deposit:"正在收集质押",s_voting:"正在投票",s_passed:"已通过",s_rejected:"已拒绝",s_failed:"已失败",clock_deposit:"质押窗口结束于 {when}",clock_voting:"投票结束于 {when}",clock_done:"已结束",bar_help:"达到投票所需 {need} LUNC 中已有 {have}",adddep_ok:"质押已添加。交易：{tx}",track_notfound:"在链上未找到该提案。请检查编号。",need_connect:"请先在上方连接您的钱包。",gov_addr:"治理账户（自动）"}
+};
+</script>
+<script>
+"use strict";
+/* ── LUNC Dev Studio · Proposal Tool ───────────────────────────────
+   Builds a Terra Classic gov-v1 MsgSubmitProposal in the browser.
+   Mirrors live proposal #12235 (LCD-verified 2026-11-05): messages[0] =
+   /cosmwasm.wasm.v1.MsgStoreCode { sender: GOV, wasm_byte_code: RAW wasm
+   (not gzipped), instantiate_permission omitted when "default" },
+   plus first-class title / summary and metadata.
+   The page never holds keys: signing happens inside Keplr.          */
+const CHAIN_ID = "columbus-5";
+const LCD = "https://terra-classic-lcd.publicnode.com";
+const RPC = "https://terra-classic-rpc.publicnode.com";
+const GOV_AUTHORITY = "terra10d07y265gmmuvt4z0w9aw880jnsr700juxf95n"; // gov module account
+const FINDER = "https://finder.terraclassic.community/mainnet";
+/* Live-verified 2026-11-05 via LCD gov params + a real simulate call;
+   refreshed from the chain again at page load. */
+const PARAMS = {
+  minDepositUluna: 5000000000000n,   // 5,000,000 LUNC to reach a vote
+  minInitialUluna: 50000000000n,     // 50,000 LUNC minimum to submit (chain-enforced, seen in simulate error)
+  depositDays: 14, votingDays: 7
+};
+const state = { lang: "en", address: null, type: "store",
+  wasm: null /* {name,size,bytes,sha256} */, snapshot: null, tracked: null };
+
+const $ = id => document.getElementById(id);
+const t = (k, vars) => { let s = (I18N[state.lang] && I18N[state.lang][k]) || I18N.en[k] || k;
+  if (vars) for (const [kk, vv] of Object.entries(vars)) s = s.replaceAll("{" + kk + "}", vv); return s; };
+const fmtLUNC = uluna => (Number(BigInt(uluna)) / 1e6).toLocaleString("en-US", { maximumFractionDigits: 6 });
+const fmtSize = b => b > 1048576 ? (b / 1048576).toFixed(2) + " MB" : b > 1024 ? (b / 1024).toFixed(1) + " KB" : b + " B";
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+/* ── i18n ── */
+function applyLang(lang) {
+  if (!I18N[lang]) lang = "en";
+  state.lang = lang;
+  document.documentElement.lang = lang;
+  document.documentElement.dir = (lang === "ar") ? "rtl" : "ltr";
+  document.querySelectorAll("[data-i18n]").forEach(el => el.textContent = t(el.dataset.i18n));
+  document.querySelectorAll("[data-i18n-html]").forEach(el => el.innerHTML = t(el.dataset.i18nHtml));
+  document.querySelectorAll("[data-i18n-ph]").forEach(el => el.placeholder = t(el.dataset.i18nPh));
+  $("lang").value = lang;
+  renderDepHelp(); renderWasmInfo();
+  if (!$("card-review").classList.contains("hidden") && state.snapshot) renderReview();
+  if (state.tracked) renderTracked(state.tracked);
+  try { localStorage.setItem("pt-lang", lang); } catch (e) {}
+}
+function renderDepHelp() {
+  $("dep-help").textContent = t("dep_help", { full: fmtLUNC(PARAMS.minDepositUluna),
+    days: PARAMS.depositDays, min: fmtLUNC(PARAMS.minInitialUluna), vdays: PARAMS.votingDays });
+}
+/* ── live gov params refresh (falls back to verified constants) ── */
+async function refreshParams() {
+  try {
+    const [dep, vot] = await Promise.all([
+      fetch(LCD + "/cosmos/gov/v1beta1/params/deposit").then(r => r.json()),
+      fetch(LCD + "/cosmos/gov/v1beta1/params/voting").then(r => r.json())]);
+    const md = dep && dep.deposit_params && dep.deposit_params.min_deposit &&
+      dep.deposit_params.min_deposit.find(c => c.denom === "uluna");
+    if (md) PARAMS.minDepositUluna = BigInt(md.amount);
+    const dp = dep && dep.deposit_params && dep.deposit_params.max_deposit_period;
+    if (dp) PARAMS.depositDays = Math.round(parseInt(dp) / 86400);
+    const vp = vot && vot.voting_params && vot.voting_params.voting_period;
+    if (vp) PARAMS.votingDays = Math.round(parseInt(vp) / 86400);
+    renderDepHelp();
+  } catch (e) { /* keep verified fallbacks */ }
+}
+
+/* ── wallet (Keplr) ── */
+async function connectWallet() {
+  const err = $("submit-err");
+  if (!window.keplr) { $("keplr-missing").classList.remove("hidden"); return null; }
+  try {
+    await window.keplr.enable(CHAIN_ID);
+    const key = await window.keplr.getKey(CHAIN_ID);
+    state.address = key.bech32Address;
+    $("myaddr").textContent = t("connected_as") + " " + state.address;
+    $("myaddr").classList.remove("hidden");
+    $("btn-connect").textContent = "✓ " + t("connected_as") + " " + state.address.slice(0, 14) + "…";
+    return state.address;
+  } catch (e) { return null; }
+}
+
+/* ── wasm file ── */
+async function loadWasmFile(file) {
+  const buf = await file.arrayBuffer();
+  const bytes = new Uint8Array(buf);
+  if (!(bytes[0] === 0 && bytes[1] === 0x61 && bytes[2] === 0x73 && bytes[3] === 0x6d)) {
+    state.wasm = null; renderWasmInfo(t("err_wasmmagic")); return;
+  }
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  const sha = [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, "0")).join("");
+  state.wasm = { name: file.name, size: bytes.length, bytes, sha256: sha };
+  renderWasmInfo();
+}
+function renderWasmInfo(forceText) {
+  const el = $("wasm-info");
+  if (forceText) { el.textContent = forceText; return; }
+  if (!state.wasm) { el.textContent = t("wasm_none"); return; }
+  el.innerHTML = esc(t("wasm_info", { name: state.wasm.name, size: fmtSize(state.wasm.size), hash: "" })) +
+    '<br><span class="hash">' + state.wasm.sha256 + "</span>";
+}
+
+/* ── form → snapshot → review ── */
+function readForm() {
+  const title = $("f-title").value.trim();
+  const desc = $("f-desc").value.trim();
+  const metaCustom = $("f-meta").value.trim();
+  const depLunc = parseFloat($("f-deposit").value || "0");
+  const depUluna = BigInt(Math.round((isFinite(depLunc) ? depLunc : 0) * 1e6));
+  return { type: state.type, title, summary: desc,
+    metadata: metaCustom || JSON.stringify({ title, summary: desc }),
+    depUluna, perm: $("f-perm").value };
+}
+function validateForm(s) {
+  if (!s.title) return t("err_title");
+  if (!s.summary) return t("err_desc");
+  if (s.type === "store" && !state.wasm) return t("err_wasm");
+  if (s.depUluna < PARAMS.minInitialUluna) return t("err_depmin", { min: fmtLUNC(PARAMS.minInitialUluna) });
+  return null;
+}
+function permLabel(v) {
+  return { default: t("perm_default"), any: t("perm_any"), me: t("perm_me"), nobody: t("perm_nobody") }[v] || v;
+}
+function buildReview() {
+  const s = readForm();
+  const errMsg = validateForm(s);
+  const fe = $("form-err");
+  if (errMsg) { fe.textContent = errMsg; fe.classList.remove("hidden"); return; }
+  fe.classList.add("hidden");
+  state.snapshot = s;
+  renderReview();
+  $("card-review").classList.remove("hidden");
+  $("card-review").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+function renderReview() {
+  const s = state.snapshot; if (!s) return;
+  const rows = [];
+  const row = (k, v) => rows.push('<tr><td class="k">' + esc(k) + '</td><td class="v">' + v + "</td></tr>");
+  row(t("r_type"), esc(s.type === "store" ? t("type_store") : t("type_text")));
+  row(t("r_title"), esc(s.title));
+  row(t("r_desc"), esc(s.summary));
+  row(t("r_meta"), esc(s.metadata));
+  if (s.type === "store" && state.wasm) {
+    row(t("r_code"), esc(state.wasm.name) + " · " + fmtSize(state.wasm.size));
+    row(t("r_codesha"), '<span class="hash">' + state.wasm.sha256 + "</span>");
+    row(t("r_perm"), esc(permLabel(s.perm)));
+    row(t("r_sender"), GOV_AUTHORITY + "<br>" + esc(t("gov_addr")));
+  }
+  row(t("r_deposit"), fmtLUNC(s.depUluna) + " LUNC (" + s.depUluna.toString() + " uluna)");
+  row(t("r_proposer"), state.address ? esc(state.address) : esc(t("need_connect")));
+  row(t("r_chain"), "Terra Classic · " + CHAIN_ID);
+  $("rev-body").innerHTML = rows.join("");
+}
+
+/* ── signing (lazy-loaded CosmJS; standard Keplr offline-signer pattern) ── */
+let cosmCache = null;
+async function loadCosm() {
+  if (cosmCache) return cosmCache;
+  const [stargate, proto, govTx, wasmTx] = await Promise.all([
+    import("https://esm.sh/@cosmjs/stargate@0.32.4?bundle"),
+    import("https://esm.sh/@cosmjs/proto-signing@0.32.4?bundle"),
+    import("https://esm.sh/cosmjs-types@0.9.0/cosmos/gov/v1/tx.js?bundle"),
+    import("https://esm.sh/cosmjs-types@0.9.0/cosmwasm/wasm/v1/tx.js?bundle")]);
+  const registry = new proto.Registry([...stargate.defaultRegistryTypes,
+    ["/cosmos.gov.v1.MsgSubmitProposal", govTx.MsgSubmitProposal],
+    ["/cosmos.gov.v1.MsgDeposit", govTx.MsgDeposit],
+    ["/cosmwasm.wasm.v1.MsgStoreCode", wasmTx.MsgStoreCode]]);
+  cosmCache = { stargate, registry };
+  return cosmCache;
+}
+async function gasPrice() {
+  try {
+    const d = await fetch("https://terra-classic-fcd.publicnode.com/v1/txs/gas_prices").then(r => r.json());
+    if (d && d.uluna) return d.uluna + "uluna";
+  } catch (e) {}
+  return "28.325uluna";
+}
+async function getClient() {
+  const { stargate, registry } = await loadCosm();
+  const signer = window.keplr.getOfflineSigner(CHAIN_ID);
+  const gp = stargate.GasPrice.fromString(await gasPrice());
+  return stargate.SigningStargateClient.connectWithSigner(RPC, signer, { registry, gasPrice: gp });
+}
+function permToAccessConfig(perm, myAddress) {
+  /* AccessType (cosmwasm.wasm.v1, verified in cosmjs-types 0.9.0):
+     0 UNSPECIFIED · 1 NOBODY · 3 EVERYBODY · 4 ANY_OF_ADDRESSES */
+  if (perm === "any") return { permission: 3, addresses: [] };
+  if (perm === "nobody") return { permission: 1, addresses: [] };
+  if (perm === "me") return { permission: 4, addresses: [myAddress] };
+  return undefined; /* default: field omitted — exactly like live proposal #12235 */
+}
+async function submitProposal() {
+  const errEl = $("submit-err"), okEl = $("submit-ok");
+  errEl.classList.add("hidden"); okEl.classList.add("hidden");
+  if (!state.address) {
+    const a = await connectWallet();
+    if (!a) { errEl.textContent = t("err_nowallet"); errEl.classList.remove("hidden"); return; }
+  }
+  const s = state.snapshot; if (!s) return;
+  const btn = $("btn-submit"); btn.disabled = true; btn.textContent = t("submitting");
+  try {
+    const client = await getClient();
+    let messages = [];
+    if (s.type === "store") {
+      messages = [{ typeUrl: "/cosmwasm.wasm.v1.MsgStoreCode", value: {
+        sender: GOV_AUTHORITY, wasmByteCode: state.wasm.bytes,
+        instantiatePermission: permToAccessConfig(s.perm, state.address) } }];
+    }
+    const msg = { typeUrl: "/cosmos.gov.v1.MsgSubmitProposal", value: {
+      messages, initialDeposit: [{ denom: "uluna", amount: s.depUluna.toString() }],
+      proposer: state.address, metadata: s.metadata, title: s.title, summary: s.summary, expedited: false } };
+    const res = await client.signAndBroadcast(state.address, [msg], "auto");
+    if (res.code !== 0) throw new Error(res.rawLog || ("code " + res.code));
+    let pid = "";
+    const evSources = [];
+    if (Array.isArray(res.events)) evSources.push(res.events);
+    if (Array.isArray(res.logs)) for (const lg of res.logs) if (Array.isArray(lg.events)) evSources.push(lg.events);
+    for (const evs of evSources) for (const ev of evs) {
+      if (ev.type !== "submit_proposal") continue;
+      for (const at of (ev.attributes || [])) if (at.key === "proposal_id") pid = String(at.value);
+    }
+    if (!pid && res.rawLog) { const m = String(res.rawLog).match(/proposal_id\D*(\d+)/); if (m) pid = m[1]; }
+    okEl.innerHTML = esc(t("submitted", { id: pid || "—", tx: "" })) +
+      ' <a href="' + FINDER + "/tx/" + res.transactionHash + '" target="_blank" rel="noopener">' +
+      esc(res.transactionHash.slice(0, 16)) + "… · " + esc(t("view_tx")) + "</a>";
+    okEl.classList.remove("hidden");
+    if (pid) { $("f-propid").value = pid; trackProposal(); }
+  } catch (e) {
+    errEl.textContent = (e && e.message) ? e.message : String(e);
+    errEl.classList.remove("hidden");
+  } finally { btn.disabled = false; btn.textContent = t("submit_btn"); }
+}
+
+/* ── tracking + add deposit ── */
+async function trackProposal() {
+  const id = $("f-propid").value.trim();
+  const errEl = $("track-err"); errEl.classList.add("hidden");
+  if (!id) return;
+  try {
+    const r = await fetch(LCD + "/cosmos/gov/v1/proposals/" + encodeURIComponent(id));
+    if (!r.ok) throw new Error("nf");
+    const d = await r.json();
+    state.tracked = d.proposal;
+    renderTracked(state.tracked);
+    $("track-out").classList.remove("hidden");
+  } catch (e) {
+    $("track-out").classList.add("hidden");
+    errEl.textContent = t("track_notfound"); errEl.classList.remove("hidden");
+  }
+}
+function statusLabel(st) {
+  return { PROPOSAL_STATUS_DEPOSIT_PERIOD: t("s_deposit"), PROPOSAL_STATUS_VOTING_PERIOD: t("s_voting"),
+    PROPOSAL_STATUS_PASSED: t("s_passed"), PROPOSAL_STATUS_REJECTED: t("s_rejected"),
+    PROPOSAL_STATUS_FAILED: t("s_failed") }[st] || st;
+}
+function renderTracked(p) {
+  if (!p) return;
+  $("t-title").textContent = p.title || ("#" + p.id);
+  $("t-status").textContent = statusLabel(p.status);
+  const total = (p.total_deposit || []).filter(c => c.denom === "uluna")
+    .reduce((a, c) => a + BigInt(c.amount), 0n);
+  $("t-dep").textContent = fmtLUNC(total) + " LUNC";
+  const pct = Math.min(100, Number(total * 10000n / PARAMS.minDepositUluna) / 100);
+  $("t-bar").style.width = pct + "%";
+  $("t-barhelp").textContent = t("bar_help", { have: fmtLUNC(total), need: fmtLUNC(PARAMS.minDepositUluna) });
+  let clock = t("clock_done");
+  const when = ts => new Date(ts).toLocaleString(state.lang === "en" ? "en-US" : state.lang);
+  if (p.status === "PROPOSAL_STATUS_DEPOSIT_PERIOD" && p.deposit_end_time) clock = t("clock_deposit", { when: when(p.deposit_end_time) });
+  if (p.status === "PROPOSAL_STATUS_VOTING_PERIOD" && p.voting_end_time) clock = t("clock_voting", { when: when(p.voting_end_time) });
+  $("t-clock").textContent = clock;
+  $("adddep-block").classList.toggle("hidden", p.status !== "PROPOSAL_STATUS_DEPOSIT_PERIOD");
+}
+async function addDeposit() {
+  const errEl = $("adddep-err"), okEl = $("adddep-ok");
+  errEl.classList.add("hidden"); okEl.classList.add("hidden");
+  if (!state.address) { errEl.textContent = t("need_connect"); errEl.classList.remove("hidden"); return; }
+  const id = $("f-propid").value.trim();
+  const amt = parseFloat($("f-adddep").value || "0");
+  if (!id || !(amt > 0)) return;
+  const btn = $("btn-adddep"); btn.disabled = true;
+  try {
+    const client = await getClient();
+    const msg = { typeUrl: "/cosmos.gov.v1.MsgDeposit", value: {
+      proposalId: BigInt(id), depositor: state.address,
+      amount: [{ denom: "uluna", amount: String(Math.round(amt * 1e6)) }] } };
+    const res = await client.signAndBroadcast(state.address, [msg], "auto");
+    if (res.code !== 0) throw new Error(res.rawLog || ("code " + res.code));
+    okEl.innerHTML = esc(t("adddep_ok", { tx: "" })) +
+      ' <a href="' + FINDER + "/tx/" + res.transactionHash + '" target="_blank" rel="noopener">' +
+      esc(res.transactionHash.slice(0, 16)) + "…</a>";
+    okEl.classList.remove("hidden");
+    trackProposal();
+  } catch (e) {
+    errEl.textContent = (e && e.message) ? e.message : String(e);
+    errEl.classList.remove("hidden");
+  } finally { btn.disabled = false; }
+}
+
+/* ── wiring ── */
+function init() {
+  const sel = $("lang");
+  sel.innerHTML = LANGS.map(([v, n]) => '<option value="' + v + '">' + n + "</option>").join("");
+  let saved = "en";
+  try { saved = localStorage.getItem("pt-lang") || "en"; } catch (e) {}
+  sel.value = saved;
+  sel.addEventListener("change", () => applyLang(sel.value));
+  applyLang(saved);
+  refreshParams();
+  if (!window.keplr) setTimeout(() => { if (!window.keplr) $("keplr-missing").classList.remove("hidden"); }, 900);
+  $("btn-connect").addEventListener("click", connectWallet);
+  $("type-seg").querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+    state.type = b.dataset.type;
+    $("type-seg").querySelectorAll("button").forEach(x => x.classList.toggle("on", x === b));
+    $("wasm-block").classList.toggle("hidden", state.type !== "store");
+  }));
+  $("f-wasm").addEventListener("change", e => { if (e.target.files[0]) loadWasmFile(e.target.files[0]); });
+  $("btn-review").addEventListener("click", buildReview);
+  $("btn-back").addEventListener("click", () => { $("card-review").classList.add("hidden");
+    $("card-form").scrollIntoView({ behavior: "smooth" }); });
+  $("btn-submit").addEventListener("click", submitProposal);
+  $("btn-track").addEventListener("click", trackProposal);
+  $("btn-adddep").addEventListener("click", addDeposit);
+  /* QA hook: lets the test harness drive the form without a wallet. */
+  if (new URLSearchParams(location.search).has("qa")) {
+    window.__qa = { state, buildReview, applyLang,
+      setSample() {
+        $("f-title").value = "Store Code: QA Sample";
+        $("f-desc").value = "QA sample proposal built by the proposal tool self-test.";
+        const bytes = new Uint8Array([0, 0x61, 0x73, 0x6d, 1, 0, 0, 0]);
+        return crypto.subtle.digest("SHA-256", bytes).then(dg => {
+          state.wasm = { name: "sample.wasm", size: bytes.length, bytes,
+            sha256: [...new Uint8Array(dg)].map(b => b.toString(16).padStart(2, "0")).join("") };
+          renderWasmInfo();
+        });
+      } };
+  }
+}
+document.addEventListener("DOMContentLoaded", init);
+</script>
+</body>
+</html>
