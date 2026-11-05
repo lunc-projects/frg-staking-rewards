@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FRG Allowance Revoke — Owner Tool</title>
+<style>
+  :root{--bg:#0d1117;--card:#161b22;--line:#2b3442;--txt:#e8edf4;--dim:#9fb0c3;--gold:#f5b942;--red:#ff5a5a;--green:#3fb96f;--btn:#8a1f1f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--txt);font-family:Georgia,'Times New Roman',serif;padding:14px}
+  .wrap{max-width:480px;margin:0 auto}
+  h1{font-size:23px;margin:6px 0 2px;color:var(--gold)}
+  .sub{color:var(--dim);font-size:14px;margin-bottom:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px}
+  .card h2{font-size:16px;margin:0 0 8px;color:var(--gold)}
+  p{font-size:15px;line-height:1.45;margin:6px 0}
+  .row{display:flex;flex-direction:column;gap:2px;padding:8px 0;border-bottom:1px dashed var(--line)}
+  .row:last-child{border-bottom:none}
+  .k{color:var(--dim);font-size:12.5px;text-transform:uppercase;letter-spacing:.4px}
+  .v{font-size:14.5px;word-break:break-all}
+  a{color:#7cc4ff}
+  .big{font-size:19px;font-weight:bold}
+  .zero{color:var(--green)} .nonzero{color:var(--red)}
+  button{width:100%;min-height:58px;border:none;border-radius:12px;font-size:17px;font-weight:bold;cursor:pointer;font-family:inherit}
+  #btn-connect{background:#233c5c;color:var(--txt);margin-bottom:10px}
+  #btn-revoke{background:var(--btn);color:#fff;font-size:19px}
+  #btn-revoke:disabled,#btn-connect:disabled{opacity:.38;cursor:not-allowed}
+  .warn{display:none;background:#3a1414;border:1px solid var(--red);border-radius:12px;padding:12px;margin-bottom:12px;color:#ffd7d7;font-size:15px}
+  .warn.show{display:block}
+  .ok{display:none;background:#12351f;border:1px solid var(--green);border-radius:12px;padding:12px;margin-bottom:12px;color:#d8ffe4;font-size:15px;word-break:break-all}
+  .ok.show{display:block}
+  .err{display:none;background:#3a1414;border:1px solid var(--red);border-radius:12px;padding:12px;margin:12px 0;color:#ffd7d7;font-size:14.5px;word-break:break-word}
+  .err.show{display:block}
+  pre{background:#0a0e13;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:12.5px;white-space:pre-wrap;word-break:break-all;color:#cfe3ff;margin:8px 0}
+  .note{color:var(--dim);font-size:13.5px}
+  .status-line{font-size:14px;color:var(--dim)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔥 FRG Allowance Revoke</h1>
+  <div class="sub">Owner tool · one job, one wallet, one press. This page never holds your keys — your wallet signs.</div>
+
+  <div class="card">
+    <h2>What this does</h2>
+    <p>This removes a <b>standing permission</b> that lets the <b>DTH/FRG pair contract</b> take FRG out of the <b>old FRG admin wallet</b> — up to the amount below, with no expiry.</p>
+    <p>That wallet holds <b>0 FRG</b> right now, so nothing can be taken today. The permission still should not exist.</p>
+    <p>After you revoke it: <b>keep that wallet empty forever</b> — its seed was shared with a developer in the past. Fee money only, never park FRG or LUNC there.</p>
+  </div>
+
+  <div class="card">
+    <h2>Live on-chain status</h2>
+    <div class="status-line" id="live-status">Reading the chain…</div>
+    <div id="live-body" style="display:none">
+      <div class="row"><span class="k">Permission held by (granter)</span><span class="v"><a id="lk-granter" target="_blank" rel="noopener"></a></span></div>
+      <div class="row"><span class="k">Who may take the FRG (spender)</span><span class="v"><a id="lk-spender" target="_blank" rel="noopener"></a></span></div>
+      <div class="row"><span class="k">On this token contract</span><span class="v"><a id="lk-contract" target="_blank" rel="noopener"></a></span></div>
+      <div class="row"><span class="k">Amount it may still take</span><span class="v big" id="live-amount">—</span></div>
+      <div class="row"><span class="k">Expiry</span><span class="v" id="live-expiry">—</span></div>
+    </div>
+    <div class="ok" id="already-done">✅ ALREADY REMOVED — this allowance reads 0 on-chain. Nothing left to do.</div>
+  </div>
+
+  <div class="warn" id="keplr-missing">Keplr was not found in this browser. Open this page in the browser that has Keplr with the old FRG admin wallet, then reload. You can still read the whole review below without it.</div>
+
+  <div class="card">
+    <h2>1 · Connect the right wallet</h2>
+    <button id="btn-connect">🦊 Connect Keplr wallet</button>
+    <div class="status-line" id="myaddr" style="display:none"></div>
+    <div class="warn" id="wrong-wallet" style="margin-top:10px;margin-bottom:0"></div>
+    <p class="note">Only the wallet that <b>gave</b> this permission can remove it. That is the old FRG admin wallet ending in <b>…6h79q</b>. No other wallet — including the new validator wallet — can do this.</p>
+  </div>
+
+  <div class="card">
+    <h2>2 · Press the button</h2>
+    <button id="btn-revoke" disabled>REVOKE ALLOWANCE</button>
+    <div class="err" id="revoke-err"></div>
+    <div class="ok" id="revoke-ok"></div>
+
+    <h2 style="margin-top:18px">👇 REVIEW — read this before you press</h2>
+    <div class="row"><span class="k">Contract (FRG token)</span><span class="v"><a href="https://finder.terraclassic.community/mainnet/address/terra14rfnhc2aru7jp304lht3yf903necsnrt4cxd464cftsfcksw0rtsgundnt" target="_blank" rel="noopener">terra14rfnhc2aru7jp304lht3yf903necsnrt4cxd464cftsfcksw0rtsgundnt</a></span></div>
+    <div class="row"><span class="k">Signed by (granter)</span><span class="v"><a href="https://finder.terraclassic.community/mainnet/address/terra1hl63t9nsu2zexgd0m5henhk6u63alpl956h79q" target="_blank" rel="noopener">terra1hl63t9nsu2zexgd0m5henhk6u63alpl956h79q</a></span></div>
+    <div class="row"><span class="k">Permission removed from (spender)</span><span class="v"><a href="https://finder.terraclassic.community/mainnet/address/terra18vyw2q4zmts0tvhp2e7zxnv2ufgrqrr8mc3ua2t7prvl947fwr3s72sjwa" target="_blank" rel="noopener">terra18vyw2q4zmts0tvhp2e7zxnv2ufgrqrr8mc3ua2t7prvl947fwr3s72sjwa</a> (the DTH/FRG pair)</span></div>
+    <div class="row"><span class="k">Exact message your wallet will sign</span></div>
+    <pre>{"decrease_allowance":{"spender":"terra18vyw2q4zmts0tvhp2e7zxnv2ufgrqrr8mc3ua2t7prvl947fwr3s72sjwa","amount":"999995560000000000"}}</pre>
+    <div class="row"><span class="k">Funds attached</span><span class="v"><b>None.</b> This sends no coins — it only lowers the permission to exactly 0.</span></div>
+    <div class="row"><span class="k">Expected fee</span><span class="v">Well under 1 LUNC. That wallet holds 4,227 LUNC (checked Nov 5), so the fee is covered. If your wallet ever shows a fee wildly larger than that — stop and ask before signing.</span></div>
+    <div class="row"><span class="k">Why only this wallet</span><span class="v">On this token, a permission can only be lowered by the wallet that granted it. Only this wallet's signature can do it.</span></div>
+  </div>
+
+  <p class="note">LUNC DEV STUDIO · Owner operations. Values above are read live from the chain when the page opens and again after the revoke.</p>
+</div>
+
+<script>
+/* ── pinned action: hardcoded, no free-form fields anywhere ── */
+const CHAIN_ID  = "columbus-5";
+const LCD       = "https://terra-classic-lcd.publicnode.com";
+const RPC       = "https://terra-classic-rpc.publicnode.com";
+const FINDER    = "https://finder.terraclassic.community/mainnet";
+const CONTRACT  = "terra14rfnhc2aru7jp304lht3yf903necsnrt4cxd464cftsfcksw0rtsgundnt";
+const GRANTER   = "terra1hl63t9nsu2zexgd0m5henhk6u63alpl956h79q";
+const SPENDER   = "terra18vyw2q4zmts0tvhp2e7zxnv2ufgrqrr8mc3ua2t7prvl947fwr3s72sjwa";
+const AMOUNT_RAW = "999995560000000000"; /* 999,995,560,000 FRG — decrease in full → lands on exactly 0 */
+const EXEC_JSON = JSON.stringify({ decrease_allowance: { spender: SPENDER, amount: AMOUNT_RAW } });
+
+const $ = id => document.getElementById(id);
+const state = { address: null, allowanceRaw: null };
+
+function finderLink(el, addr) { el.textContent = addr; el.href = FINDER + "/address/" + addr; }
+function fmtFRG(raw) {
+  const n = BigInt(raw); const whole = n / 1000000n; const frac = (n % 1000000n).toString().padStart(6, "0");
+  return whole.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",") + "." + frac + " FRG";
+}
+function expiryText(exp) {
+  if (!exp) return "—";
+  if (exp.never !== undefined) return "Never expires";
+  if (exp.at_time) return "Expires at time " + exp.at_time;
+  if (exp.at_height) return "Expires at block " + exp.at_height;
+  return JSON.stringify(exp);
+}
+
+async function readAllowance() {
+  const q = { allowance: { owner: GRANTER, spender: SPENDER } };
+  const url = LCD + "/cosmwasm/wasm/v1/contract/" + CONTRACT + "/smart/" + btoa(JSON.stringify(q));
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("LCD read failed (" + r.status + ")");
+  const d = await r.json();
+  return d.data; /* { allowance: "<raw>", expires: {...} } */
+}
+
+function isZero(raw) { try { return BigInt(raw) === 0n; } catch (e) { return raw === "0"; } }
+
+async function renderLive() {
+  try {
+    const data = await readAllowance();
+    state.allowanceRaw = data.allowance;
+    $("live-status").style.display = "none";
+    $("live-body").style.display = "block";
+    finderLink($("lk-granter"), GRANTER);
+    finderLink($("lk-spender"), SPENDER);
+    finderLink($("lk-contract"), CONTRACT);
+    const amt = $("live-amount");
+    amt.textContent = fmtFRG(data.allowance) + "  (raw " + data.allowance + ")";
+    amt.className = "v big " + (isZero(data.allowance) ? "zero" : "nonzero");
+    $("live-expiry").textContent = expiryText(data.expires);
+    if (isZero(data.allowance)) {
+      $("already-done").classList.add("show");
+      $("btn-revoke").disabled = true;
+    } else if (data.allowance !== AMOUNT_RAW) {
+      showErr("Heads up: the live amount (" + data.allowance + ") is not the amount this page was built for (" + AMOUNT_RAW + "). The button stays off — ask before doing anything.");
+      $("btn-revoke").disabled = true;
+    }
+    refreshButton();
+  } catch (e) {
+    $("live-status").textContent = "Could not read the chain just now (" + (e.message || e) + "). Reload to try again — the button stays off until the live value is shown.";
+  }
+}
+
+function refreshButton() {
+  const ok = state.address === GRANTER && state.allowanceRaw === AMOUNT_RAW;
+  $("btn-revoke").disabled = !ok;
+}
+
+async function connectWallet() {
+  if (!window.keplr) { $("keplr-missing").classList.add("show"); return; }
+  try {
+    await window.keplr.enable(CHAIN_ID);
+    const key = await window.keplr.getKey(CHAIN_ID);
+    state.address = key.bech32Address;
+    const mine = $("myaddr");
+    mine.style.display = "block";
+    mine.textContent = "Connected: " + state.address;
+    $("btn-connect").textContent = "✓ Connected: " + state.address.slice(0, 14) + "…";
+    const w = $("wrong-wallet");
+    if (state.address !== GRANTER) {
+      w.innerHTML = "⛔ <b>WRONG WALLET.</b> This wallet cannot remove the permission. Switch in Keplr to the <b>old FRG admin wallet</b> ending in <b>…6h79q</b> (terra1hl63t9nsu2zexgd0m5henhk6u63alpl956h79q), then press Connect again.";
+      w.classList.add("show");
+    } else {
+      w.classList.remove("show");
+    }
+    refreshButton();
+  } catch (e) { /* user closed the wallet prompt — nothing to do */ }
+}
+
+/* ── signing (lazy-loaded CosmJS; same proven pattern as the Proposal Tool) ── */
+let cosmCache = null;
+async function loadCosm() {
+  if (cosmCache) return cosmCache;
+  const [stargate, proto, wasmTx] = await Promise.all([
+    import("https://esm.sh/@cosmjs/stargate@0.32.4?bundle"),
+    import("https://esm.sh/@cosmjs/proto-signing@0.32.4?bundle"),
+    import("https://esm.sh/cosmjs-types@0.9.0/cosmwasm/wasm/v1/tx.js?bundle")]);
+  const registry = new proto.Registry([...stargate.defaultRegistryTypes,
+    ["/cosmwasm.wasm.v1.MsgExecuteContract", wasmTx.MsgExecuteContract]]);
+  cosmCache = { stargate, registry };
+  return cosmCache;
+}
+async function gasPrice() {
+  try {
+    const d = await fetch("https://terra-classic-fcd.publicnode.com/v1/txs/gas_prices").then(r => r.json());
+    if (d && d.uluna) return d.uluna + "uluna";
+  } catch (e) {}
+  return "28.325uluna";
+}
+function showErr(msg) { const e = $("revoke-err"); e.textContent = msg; e.classList.add("show"); }
+
+async function revoke() {
+  $("revoke-err").classList.remove("show");
+  $("revoke-ok").classList.remove("show");
+  const btn = $("btn-revoke");
+  if (state.address !== GRANTER) { showErr("Connect the old FRG admin wallet (…6h79q) first — only it can sign this."); return; }
+  btn.disabled = true; btn.textContent = "Waiting for your wallet…";
+  try {
+    const { stargate, registry } = await loadCosm();
+    const signer = window.keplr.getOfflineSigner(CHAIN_ID);
+    const gp = stargate.GasPrice.fromString(await gasPrice());
+    const client = await stargate.SigningStargateClient.connectWithSigner(RPC, signer, { registry, gasPrice: gp });
+    const msg = { typeUrl: "/cosmwasm.wasm.v1.MsgExecuteContract", value: {
+      sender: GRANTER, contract: CONTRACT,
+      msg: new TextEncoder().encode(EXEC_JSON), funds: [] } };
+    const res = await client.signAndBroadcast(GRANTER, [msg], "auto");
+    if (res.code !== 0) throw new Error(res.rawLog || ("code " + res.code));
+    const ok = $("revoke-ok");
+    ok.innerHTML = "✅ <b>Sent.</b> Transaction: <a href=\"" + FINDER + "/tx/" + res.transactionHash + "\" target=\"_blank\" rel=\"noopener\">" + res.transactionHash + "</a><br>Checking the chain for the new value…";
+    ok.classList.add("show");
+    btn.textContent = "REVOKE ALLOWANCE";
+    /* re-read until the chain shows the new value (LCD can lag a few seconds) */
+    for (let i = 0; i < 8; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      try {
+        const data = await readAllowance();
+        if (isZero(data.allowance)) {
+          state.allowanceRaw = data.allowance;
+          $("live-amount").textContent = fmtFRG("0") + "  (raw 0)";
+          $("live-amount").className = "v big zero";
+          $("already-done").classList.add("show");
+          ok.innerHTML = "✅ <b>DONE — allowance is now 0 on-chain.</b> Transaction: <a href=\"" + FINDER + "/tx/" + res.transactionHash + "\" target=\"_blank\" rel=\"noopener\">" + res.transactionHash + "</a>";
+          btn.disabled = true;
+          return;
+        }
+      } catch (e) {}
+    }
+    ok.innerHTML = "✅ <b>Sent.</b> Transaction: <a href=\"" + FINDER + "/tx/" + res.transactionHash + "\" target=\"_blank\" rel=\"noopener\">" + res.transactionHash + "</a><br>The chain has not shown the new value yet — reload this page in a minute to confirm it reads 0.";
+    btn.disabled = true;
+  } catch (e) {
+    showErr((e && e.message) ? e.message : String(e));
+    btn.disabled = false; btn.textContent = "REVOKE ALLOWANCE";
+    refreshButton();
+  }
+}
+
+$("btn-connect").addEventListener("click", connectWallet);
+$("btn-revoke").addEventListener("click", revoke);
+if (!window.keplr) $("keplr-missing").classList.add("show");
+renderLive();
+</script>
+</body>
+</html>
